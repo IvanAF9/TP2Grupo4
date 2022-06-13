@@ -1,3 +1,39 @@
+import os
+import pickle
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+
+def acceso_youtube():
+    credentials = None
+    #ver que las credenciales sigan siendo validas o crearlas
+    if os.path.exists("token.pickle"):
+        print("Ingreso a youtube exitoso")
+        with open("token.pickle","rb") as token:                #"rb" read binary
+            credentials = pickle.load(token)
+
+    if not credentials or not credentials.valid:
+        if credentials and credentials.expired and credentials.refresh_token:
+            print("Ingreso a youtube exitoso")
+            credentials.refresh(Request())
+
+        else:
+            print("Ingreso a youtube exitoso")
+            flow = InstalledAppFlow.from_client_secrets_file("clave.json",
+                scopes=["https://www.googleapis.com/auth/youtube.readonly"])
+
+            flow.run_local_server(port=8080, prompt="consent", authorization_prompt_message="")#prompt es para recibir el token de actualizacion
+            credentials = flow.credentials
+
+            #Guardar las credenciales en un archivo pickle
+            with open("token.pickle", "wb") as f:
+                pickle.dump(credentials, f)
+
+    return credentials  
+
+
+
+
 def opcion_1():
     pass
 
@@ -32,7 +68,7 @@ def main():
             opcion = input('Incorrecto, elija una opcion valida: ')
 
         if opcion == '1':
-            opcion_1()
+            credentials = acceso_youtube()
         elif opcion == '2':
             opcion_2()
         elif opcion == '3':
