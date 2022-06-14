@@ -113,7 +113,7 @@ def main():
             opcion = input('Incorrecto, elija una opcion valida: ')
 
         if opcion == '1':
-            #credentials = acceso_youtube()
+            credentials = acceso_youtube()
             logueo_youtube = 1
         elif opcion == '2':
             token_usuario = acceso_spotify()
