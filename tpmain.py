@@ -84,6 +84,14 @@ def listar_playlists(token_usuario: RefreshingToken):
     En la documentación de tekore figuran los objetos y sus atributos que devuelven las funciones, esto esta en:
     https://tekore.readthedocs.io/en/stable/reference/client.html
     '''
+
+def listar_playlists_youtube(credentials):
+
+    
+
+    pass
+
+
 def opcion_3():
     pass
 def opcion_4():
@@ -123,7 +131,7 @@ def main():
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
-                opcion_3()
+                listar_playlists_youtube(credentials)
         elif opcion == '4':
             if logueo_spotify == 0:
                 print('Antes de buscar información en Spotify, deberá loguearse en el MENU')
