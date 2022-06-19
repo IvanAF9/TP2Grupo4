@@ -22,7 +22,7 @@ def acceso_youtube():
         else:
             print("Ingreso a youtube exitoso")
             flow = InstalledAppFlow.from_client_secrets_file("clave.json",
-                scopes=["https://www.googleapis.com/auth/youtube.readonly"])
+                scopes=["https://www.googleapis.com/auth/youtube"])
 
             flow.run_local_server(port=8080, prompt="consent", authorization_prompt_message="")#prompt es para recibir el token de actualizacion
             credentials = flow.credentials
@@ -105,6 +105,77 @@ def listar_playlists_youtube(credentials):
 
     return lista_aux
 
+def crear_lista_de_reproduccion_youtube(credentials):
+    youtube = build("youtube", "v3", credentials=credentials)
+    nueva_lista: str = input("Ingrese el nombre de la lista a crear: ")
+
+    #crear la playlist
+
+    playlists_insert_response = youtube.playlists().insert(
+      part="snippet,status",
+      body=dict(
+        snippet=dict(
+          title=nueva_lista,
+          description="A private playlist created with the YouTube API v3"
+        ),
+        status=dict(
+          privacyStatus="private"
+        )
+      )
+    ).execute()
+    print("Lista creada")
+
+    """Comentario, el codigo que sigue es para dar la opcion de ingresar las canciones que tiene el canal propio,
+    la duda es si las canciones estan en el canal o no
+    #se debe esperar un segundo antes de solicitar una nueva respuesta del servidor
+    input("espera")
+    
+    lista_aux = ver_listas_de_reproduccion_youtube(youtube)
+    
+   
+
+    for elemento in lista_aux:
+        if nueva_lista==elemento["title"]:
+            playlist_Id=elemento["playlistId"]
+
+    #busca todos los videos
+    channels_response = youtube.channels().list(
+      mine=True,
+      part="contentDetails"
+    ).execute()
+    
+    for channel in channels_response["items"]:
+        uploads_list_id = channel["contentDetails"]["relatedPlaylists"]["uploads"]
+
+    playlistitems_list_request = youtube.playlistItems().list(
+     
+      part="snippet",
+      playlistId=uploads_list_id
+    ).execute()
+
+    #crear una lista de diccionarios con el titulo del video y su id
+    for playlist_item in playlistitems_list_request["items"]:
+        title = playlist_item["snippet"]["title"]
+        video_id = playlist_item["snippet"]["resourceId"]["videoId"]
+        
+    print("1 - ",title)
+    seleccion = input("Selecciones el video a agregar a la lista: ")
+    
+    if seleccion=="1":
+        video=video_id
+
+    youtube.playlistItems().insert(
+        part="snippet",
+        body={
+            "snippet": {
+                "playlistId":playlist_Id,
+                "resourceId":{
+                    "kind": "youtube#video",
+                    "videoId": video
+                }
+            }
+        }).execute()"""
+
 
 
     
@@ -133,7 +204,7 @@ def main():
         print('3- Listar Playlists actuales para Youtube')
         print('4- Listar Playlists actuales para Spotify')
         print('5- ')
-        print('6- ')
+        print('6- Crear una nueva playlist en Youtube')
         print('7- ')
         print('8- SALIR')
         opcion: str = input('Elija opcion (1,2,3,4,5,6,7,8): ')
@@ -162,7 +233,10 @@ def main():
         elif opcion == '5':
             opcion_4()
         elif opcion == '6':
-            opcion_4()
+            if logueo_youtube == 0:
+                print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
+            else:
+                crear_lista_de_reproduccion_youtube(credentials)
         elif opcion == '7':
             opcion_4()
         elif opcion == '8':
