@@ -87,9 +87,29 @@ def listar_playlists(token_usuario: RefreshingToken):
 
 def listar_playlists_youtube(credentials):
 
+    youtube = build("youtube", "v3", credentials=credentials)
+
+    requests = youtube.playlists().list(part="contentDetails, snippet", mine=True, maxResults=50)
+    
+    response = requests.execute()
+
+    list_items = response["items"]
+    lista_aux: list = list()
+
+    for i in range(len(list_items)):
+        dicc_aux = {
+            "playlistId":list_items[i]["id"],
+            "title":list_items[i]["snippet"]["title"]
+        }
+        lista_aux.append(dicc_aux)
+
+    return lista_aux
+
+
+
     
 
-    pass
+  
 
 
 def opcion_3():
@@ -131,7 +151,9 @@ def main():
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
-                listar_playlists_youtube(credentials)
+                lista_playlist = listar_playlists_youtube(credentials)
+                for lista in lista_playlist:
+                    print(lista["title"])
         elif opcion == '4':
             if logueo_spotify == 0:
                 print('Antes de buscar información en Spotify, deberá loguearse en el MENU')
