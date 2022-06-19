@@ -2,6 +2,7 @@ import tekore as tk
 from tekore import RefreshingToken
 import os
 import pickle
+import csv
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -177,10 +178,41 @@ def crear_lista_de_reproduccion_youtube(credentials):
         }).execute()"""
 
 
-
+def expotar_playlist_youtube(credentials):
+    '''pre:recibe las credenciales
+       pos:exportar una playlist y sus videos a 
+       un archivo csv
+    '''
+    youtube = build('youtube', 'v3', credentials = credentials)
+    lista_playlist = listar_playlists_youtube(credentials)
+    contador = 0
     
+    for lista in lista_playlist:
+        contador =+ 1
+        print(contador, lista["title"])
 
-  
+    numero_playlist = input('Ingrese el numero de la playlist que desea exportar: ')
+    id = lista_playlist[numero_playlist-1]["playlistId"]
+    nombre_playlist = lista_playlist[numero_playlist-1]["title"]
+
+    playlist = youtube.playlistItems().list(
+            part = 'snippet',
+            playlistId = id,
+            maxResults = 50
+            )
+    playlist = playlist.execute()
+    nombre_videos = []
+    print('videos:')
+    for item in playlist['items']:
+        print('_ ',item['snippet']['title'] )
+        nombres = item['snippet']['title']    
+        nombre_videos.append(nombres)
+    
+    with open('archivo_playlists.csv','w',newline='')as lista:
+        datos = csv.writer(lista,delimiter=' ')
+        datos.writerow('Playlist:')
+        datos.writerow(nombre_playlist)
+        datos.writerows(nombre_videos)
 
 
 def opcion_3():
@@ -203,7 +235,7 @@ def main():
         print('2- Autenticarse en Spotify')
         print('3- Listar Playlists actuales para Youtube')
         print('4- Listar Playlists actuales para Spotify')
-        print('5- ')
+        print('5- Exportar una playlist de youtube')
         print('6- Crear una nueva playlist en Youtube')
         print('7- ')
         print('8- SALIR')
@@ -231,7 +263,10 @@ def main():
             else:
                 listar_playlists(token_usuario)
         elif opcion == '5':
-            opcion_4()
+            if logueo_youtube == 0:
+                print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
+            else:
+                expotar_playlist_youtube(credentials)
         elif opcion == '6':
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
