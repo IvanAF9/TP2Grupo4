@@ -18,7 +18,6 @@ def acceso_youtube():
 
     if not credentials or not credentials.valid:
         if credentials and credentials.expired and credentials.refresh_token:
-            print("Ingreso a youtube exitoso")
             credentials.refresh(Request())
 
         else:
@@ -204,11 +203,8 @@ def buscador_spotify(spotify: Spotify):
 
 def listar_playlists_youtube(credentials):
     youtube = build("youtube", "v3", credentials=credentials)
-
     requests = youtube.playlists().list(part="contentDetails, snippet", mine=True, maxResults=50)
-
     response = requests.execute()
-
     list_items = response["items"]
     lista_aux: list = list()
 
@@ -220,6 +216,78 @@ def listar_playlists_youtube(credentials):
         lista_aux.append(dicc_aux)
 
     return lista_aux
+
+
+
+def validar_ingreso_fun_canciones_en_playlist() -> int:
+    select = input("Seleccione el nro de lista para ver las canciones en ella: ")
+    es_numerico = select.isnumeric()
+
+    while es_numerico!=True:
+        print("Opcion invalida")
+        select = input("Seleccione el nro de lista para ver las canciones en ella: ")
+        es_numerico = select.isnumeric()
+
+    select = int(select)
+
+    return select
+
+def listar_playlist_y_temas_youtube(credentials):
+    youtube = build("youtube", "v3", credentials=credentials)
+    lista_playlist = listar_playlists_youtube(credentials)
+    lista_playlist.append({"title":"Volver al menu"})
+    i: int = 0
+    print()
+    print("Playlist:")
+    for lista in lista_playlist:
+        i+=1
+        if i<len(lista_playlist):
+            print(i,"- ***",lista["title"],"***")
+        else:
+            print(i,"-",lista["title"])
+
+    select = int(validar_ingreso_fun_canciones_en_playlist())
+    while select != len(lista_playlist):
+        if select>len(lista_playlist):
+            print("Opcion invalida")
+            select = validar_ingreso_fun_canciones_en_playlist()
+        else:
+            playlist = youtube.playlistItems().list(
+                part='snippet',
+                playlistId=lista_playlist[select-1]["playlistId"],
+                maxResults=50
+            )
+            
+            playlist = playlist.execute()
+            print()
+
+            if len(playlist["items"])==0:
+                    print("No hay canciones en esta playlist")
+            else:
+                print("Playlist:",lista_playlist[select-1]["title"])
+                print("Canciones:")
+                for item in playlist['items']:
+                        print('-', item['snippet']['title'])
+
+            print()
+            i = 0
+            print("Playlist:")
+            for lista in lista_playlist:
+                i+=1
+                if i<len(lista_playlist):
+                    print(i,"- ***",lista["title"],"***")
+                else:
+                    print(i,"-",lista["title"])
+            select = validar_ingreso_fun_canciones_en_playlist()
+
+
+
+    
+
+
+    
+        
+
 
 
 def crear_lista_de_reproduccion_youtube(credentials):
@@ -304,10 +372,10 @@ def expotar_playlist_youtube(credentials):
     contador = 0
 
     for lista in lista_playlist:
-        contador = + 1
+        contador += 1
         print(contador, lista["title"])
 
-    numero_playlist = input('Ingrese el numero de la playlist que desea exportar: ')
+    numero_playlist = int(input('Ingrese el numero de la playlist que desea exportar: '))
     id = lista_playlist[numero_playlist - 1]["playlistId"]
 
     playlist = youtube.playlistItems().list(
@@ -371,9 +439,7 @@ def main():
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
-                lista_playlist = listar_playlists_youtube(credentials)
-                for lista in lista_playlist:
-                    print(lista["title"])
+                listar_playlist_y_temas_youtube(credentials)
         elif opcion == '4':
             if logueo_spotify == 0:
                 print('Antes de buscar información en Spotify, deberá loguearse en el MENU')
