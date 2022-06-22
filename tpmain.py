@@ -309,7 +309,6 @@ def expotar_playlist_youtube(credentials):
 
     numero_playlist = input('Ingrese el numero de la playlist que desea exportar: ')
     id = lista_playlist[numero_playlist - 1]["playlistId"]
-    nombre_playlist = lista_playlist[numero_playlist - 1]["title"]
 
     playlist = youtube.playlistItems().list(
         part='snippet',
@@ -323,12 +322,24 @@ def expotar_playlist_youtube(credentials):
         print('_ ', item['snippet']['title'])
         nombres = item['snippet']['title']
         nombre_videos.append(nombres)
+        descripcion = item['snippet']['description']
+        titulo = item['snippet']['title']
+        channel_id = item['snippet']['channelId']
+        time = item['snippet']['publishedAt']
+
+    nombre_playlist = ('-Playlist: ',titulo)
+    atributos = ('-Titulo de la playlist: ', titulo, '-Id del canal: ', channel_id, '-Tiempo de subida: ', time)
+    descripcion_general = ('-Descripcion general: ', descripcion)
 
     with open('archivo_playlists.csv', 'w', newline='') as lista:
         datos = csv.writer(lista, delimiter=' ')
-        datos.writerow('Playlist:')
         datos.writerow(nombre_playlist)
         datos.writerows(nombre_videos)
+        datos.writerow(atributos)
+        try:
+            datos.writerow(descripcion_general)
+        except UnicodeEncodeError:
+            print('Hubo un error con la descipcion, por un caracter no aceptado')
 
 
 def main():
