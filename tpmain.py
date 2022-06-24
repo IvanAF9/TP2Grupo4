@@ -3,39 +3,50 @@ from tekore import RefreshingToken, Spotify
 import os
 import pickle
 import csv
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+
 
 
 def acceso_youtube():
     credentials = None
     # ver que las credenciales sigan siendo validas o crearlas
     if os.path.exists("token.pickle"):
-        print("Ingreso a youtube exitoso")
         with open("token.pickle", "rb") as token:  # "rb" read binary
             credentials = pickle.load(token)
+    try:        
+        if not credentials or not credentials.valid:
+            if credentials and credentials.expired and credentials.refresh_token:
+                print("Refrescando token de acceso...")
+                credentials.refresh(Request())
+            else:
+                print("Esperando autorizacion...")
+                print()
+                flow = InstalledAppFlow.from_client_secrets_file("clave.json",
+                    scopes=["https://www.googleapis.com/auth/youtube"])
 
-    if not credentials or not credentials.valid:
-        if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
+                flow.run_local_server(port=8080, prompt="consent", authorization_prompt_message="")#prompt es para recibir el token de actualizacion
+                credentials = flow.credentials
 
-        else:
-            print("Ingreso a youtube exitoso")
-            flow = InstalledAppFlow.from_client_secrets_file("clave.json",
-                                                             scopes=["https://www.googleapis.com/auth/youtube"])
+                #Guardar las credenciales en un archivo pickle
+                with open("token.pickle", "wb") as f:
+                    print("Inicio de sesion exitoso")
+                    pickle.dump(credentials, f)
 
-            flow.run_local_server(port=8080, prompt="consent",
-                                  authorization_prompt_message="")  # prompt es para recibir el token de actualizacion
-            credentials = flow.credentials
+        service_youtube= build("youtube", "v3", credentials=credentials)         
+        return service_youtube
 
-            # Guardar las credenciales en un archivo pickle
-            with open("token.pickle", "wb") as f:
-                pickle.dump(credentials, f)
-
-    return credentials
+    except:
+        print("No hay conexion a internet")
+                
+        return None
 
 
+def channel_request(service_youtube) -> str:
+    canal = service_youtube.channels().list(part="statistics", mine=True).execute()
+    id_canal = canal["items"][0]["id"]
+    return id_canal
 def acceso_spotify() -> Spotify:
     '''Genera conexion con spotify a traves del id_cliente y cliente_secreto
     	PRE: No recibe nada
@@ -201,9 +212,8 @@ def buscador_spotify(spotify: Spotify):
 
         
 
-def listar_playlists_youtube(credentials):
-    youtube = build("youtube", "v3", credentials=credentials)
-    requests = youtube.playlists().list(part="contentDetails, snippet", mine=True, maxResults=50)
+def listar_playlists_youtube(service_youtube) -> list:
+    requests = service_youtube.playlists().list(part="contentDetails, snippet", mine=True, maxResults=50)
     response = requests.execute()
     list_items = response["items"]
     lista_aux: list = list()
@@ -217,24 +227,78 @@ def listar_playlists_youtube(credentials):
 
     return lista_aux
 
-
-
-def validar_ingreso_fun_canciones_en_playlist() -> int:
-    select = input("Seleccione el nro de lista para ver las canciones en ella: ")
+def validar_ingreso_int(texto: str) -> int:
+    select = input(texto)
     es_numerico = select.isnumeric()
 
     while es_numerico!=True:
         print("Opcion invalida")
-        select = input("Seleccione el nro de lista para ver las canciones en ella: ")
+        select = input(texto)
         es_numerico = select.isnumeric()
 
     select = int(select)
 
     return select
 
-def listar_playlist_y_temas_youtube(credentials):
-    youtube = build("youtube", "v3", credentials=credentials)
-    lista_playlist = listar_playlists_youtube(credentials)
+
+def sub_menu_acceso_youtube():
+    sesion_iniciada = False
+    lista_usuarios: list = {
+            "UC_AWnHXFjISHh3Kn9CFWc6A":"ellocomauro376@gmail.com",
+            "channelId":"id de otro canal",
+    }
+    print()
+    print("Administrar cuenta de Youtube:")
+    opciones: list = [
+        "1 - Iniciar sesion",
+        "2 - Ver usuario actual",
+        "3 - Cambiar usuario",
+        "4 - Volver al menu"
+    ]
+    for i in range(len(opciones)):
+        print(opciones[i])
+    texto = "Ingrese una opcion: "
+    select = validar_ingreso_int(texto)
+    while select!=4:
+        while select>4:
+            print("Opcion invalida")
+            select = validar_ingreso_int(texto)
+        if select==1:
+            print()
+            service_youtube = acceso_youtube()
+            print("Sesion iniciada")
+            sesion_iniciada = True
+
+        elif select ==2:
+            print()
+            if os.path.exists("token.pickle"):
+                service_youtube = acceso_youtube()
+                id_canal = channel_request(service_youtube)
+                print("Usuario actual:",lista_usuarios[id_canal])
+                sesion_iniciada = True
+                #hacer request para obtener el id del canal y asociarlo a la lista_usuario
+                #imprimir el nombre
+            else:
+                print("No existe usuario actual")
+        elif select==3:
+            print()
+            if os.path.exists("token.pickle"):
+                os.remove("token.pickle") 
+                service_youtube = acceso_youtube()
+                sesion_iniciada = True
+            else:
+                print("No existe usuario, por favor inicie sesion")
+        print()
+        print("Administrar cuenta de Youtube:")
+        for i in range(len(opciones)):
+            print(opciones[i])
+        select = validar_ingreso_int(texto)
+
+    return service_youtube, sesion_iniciada
+
+def listar_playlist_y_temas_youtube(service_youtube):
+    print("Cargardo listas...")
+    lista_playlist = listar_playlists_youtube(service_youtube)
     lista_playlist.append({"title":"Volver al menu"})
     i: int = 0
     print()
@@ -245,14 +309,15 @@ def listar_playlist_y_temas_youtube(credentials):
             print(i,"- ***",lista["title"],"***")
         else:
             print(i,"-",lista["title"])
-
-    select = int(validar_ingreso_fun_canciones_en_playlist())
+    texto: str = "Seleccione el nro de lista para ver las canciones en ella o vuelva al menu: "
+    select = validar_ingreso_int(texto)
     while select != len(lista_playlist):
         if select>len(lista_playlist):
             print("Opcion invalida")
-            select = validar_ingreso_fun_canciones_en_playlist()
+            select = validar_ingreso_int(texto)
         else:
-            playlist = youtube.playlistItems().list(
+            print("Cargando canciones...")
+            playlist = service_youtube.playlistItems().list(
                 part='snippet',
                 playlistId=lista_playlist[select-1]["playlistId"],
                 maxResults=50
@@ -278,25 +343,39 @@ def listar_playlist_y_temas_youtube(credentials):
                     print(i,"- ***",lista["title"],"***")
                 else:
                     print(i,"-",lista["title"])
-            select = validar_ingreso_fun_canciones_en_playlist()
-
-
-
+            select = validar_ingreso_int(texto)
     
+def ver_todos_los_temas_youtube(service_youtube) -> list:
+    lista_playlist = listar_playlists_youtube(service_youtube)
+    lista_aux: list = list()
+    dicc_aux: dict = dict()
+    for i in range(len(lista_playlist)):
+        playlist = service_youtube.playlistItems().list(
+                    part='snippet',
+                    playlistId=lista_playlist[i]["playlistId"],
+                    maxResults=50
+                )
+                
+        playlist = playlist.execute()
+        for item in playlist['items']:
+            dicc_aux = {
+                "title":item['snippet']['title'],
+                "videoid":item["snippet"]["resourceId"]["videoId"]
+            }
+            lista_aux.append(dicc_aux)
 
+        for i in range(len(lista_aux)):
+            for j in range(len(lista_aux)):
+                if i!=j and i<len(lista_aux) and j<len(lista_aux):
+                    if lista_aux[i]["videoid"]==lista_aux[j]["videoid"]:
+                        lista_aux.remove(lista_aux[j])
 
-    
-        
+    return lista_aux 
 
-
-
-def crear_lista_de_reproduccion_youtube(credentials):
-    youtube = build("youtube", "v3", credentials=credentials)
+def crear_lista_de_reproduccion_youtube(service_youtube):
     nueva_lista: str = input("Ingrese el nombre de la lista a crear: ")
-
-    # crear la playlist
-
-    playlists_insert_response = youtube.playlists().insert(
+    print("Creando lista de reproduccion...")
+    playlists_insert_response = service_youtube.playlists().insert(
         part="snippet,status",
         body=dict(
             snippet=dict(
@@ -309,66 +388,64 @@ def crear_lista_de_reproduccion_youtube(credentials):
         )
     ).execute()
     print("Lista creada")
+    print("Cargando canciones...")
+    lista_temas = ver_todos_los_temas_youtube(service_youtube)
+    lista_temas.append({"title":"Volver al menu"})
+    i: int = 0
+    print()
+    print("Canciones existentes en todas sus playlist:")
+    for lista in lista_temas:
+        i+=1
+        if i<len(lista_temas):
+            print(i,"- ***",lista["title"],"***")
+        else:
+            print(i,"-",lista["title"])
+    texto: str = "Seleccion una cancion para listar en la playlist creada o vuelva al menu: "
+    lista_playlist = listar_playlists_youtube(service_youtube)
+    for title in lista_playlist:
+        if title["title"]==nueva_lista:
+            playlistId=title["playlistId"]
+            break
+    select = validar_ingreso_int(texto)
+    while select != len(lista_temas):
+        if select>len(lista_temas):
+            print("Opcion invalida")
+        else:
+            print("Listando cancion...")
+            insertar_tema = service_youtube.playlistItems().insert(
+                part='snippet',
+                body={
+                    "snippet":{
+                        "playlistId":playlistId,
+                        "resourceId":{
+                            "kind":"youtube#video",
+                            "videoId":lista_temas[select-1]["videoid"]
+                        }
+                    }
 
-    """Comentario, el codigo que sigue es para dar la opcion de ingresar las canciones que tiene el canal propio,
-    la duda es si las canciones estan en el canal o no
-    #se debe esperar un segundo antes de solicitar una nueva respuesta del servidor
-    input("espera")
-
-    lista_aux = ver_listas_de_reproduccion_youtube(youtube)
-
-
-
-    for elemento in lista_aux:
-        if nueva_lista==elemento["title"]:
-            playlist_Id=elemento["playlistId"]
-
-    #busca todos los videos
-    channels_response = youtube.channels().list(
-      mine=True,
-      part="contentDetails"
-    ).execute()
-
-    for channel in channels_response["items"]:
-        uploads_list_id = channel["contentDetails"]["relatedPlaylists"]["uploads"]
-
-    playlistitems_list_request = youtube.playlistItems().list(
-
-      part="snippet",
-      playlistId=uploads_list_id
-    ).execute()
-
-    #crear una lista de diccionarios con el titulo del video y su id
-    for playlist_item in playlistitems_list_request["items"]:
-        title = playlist_item["snippet"]["title"]
-        video_id = playlist_item["snippet"]["resourceId"]["videoId"]
-
-    print("1 - ",title)
-    seleccion = input("Selecciones el video a agregar a la lista: ")
-
-    if seleccion=="1":
-        video=video_id
-
-    youtube.playlistItems().insert(
-        part="snippet",
-        body={
-            "snippet": {
-                "playlistId":playlist_Id,
-                "resourceId":{
-                    "kind": "youtube#video",
-                    "videoId": video
                 }
-            }
-        }).execute()"""
+            ).execute()
+            lista_temas.remove(lista_temas[select-1])
+            print("Elemento listado")
+            print()
+            print("Elementos restantes:")
+            i = 0
+            for lista in lista_temas:
+                i+=1
+                if i<len(lista_temas):
+                    print(i,"- ***",lista["title"],"***")
+                else:
+                    print(i,"-",lista["title"])
+        select = validar_ingreso_int(texto)  
 
+    
 
-def expotar_playlist_youtube(credentials):
+def expotar_playlist_youtube(service_youtube):
     '''pre:recibe las credenciales
        pos:exportar una playlist y sus videos a
        un archivo csv
     '''
-    youtube = build('youtube', 'v3', credentials=credentials)
-    lista_playlist = listar_playlists_youtube(credentials)
+    lista_playlist = listar_playlists_youtube(service_youtube)
     contador = 0
 
     for lista in lista_playlist:
@@ -378,14 +455,14 @@ def expotar_playlist_youtube(credentials):
     numero_playlist = int(input('Ingrese el numero de la playlist que desea exportar: '))
     id = lista_playlist[numero_playlist - 1]["playlistId"]
 
-    playlist = youtube.playlistItems().list(
+    playlist = service_youtube.playlistItems().list(
         part='snippet',
         playlistId=id,
         maxResults=50
     )
     playlist = playlist.execute()
     nombre_videos = []
-    print('videos:')
+    print("videos:")
     for item in playlist['items']:
         print('_ ', item['snippet']['title'])
         nombres = item['snippet']['title']
@@ -416,7 +493,7 @@ def main():
     menu: int = 1
     while menu == 1:
         print('MENU')
-        print('1- Autenticarse en Youtube')
+        print('1- Autenticarse, ver usuario actual o cambiar usuario en Youtube')
         print('2- Autenticarse en Spotify')
         print('3- Listar Playlists actuales para Youtube')
         print('4- Listar Playlists actuales para Spotify')
@@ -429,17 +506,18 @@ def main():
             opcion = input('Incorrecto, elija una opcion valida: ')
 
         if opcion == '1':
-            credentials = acceso_youtube()
-            logueo_youtube = 1
+            service_youtube = sub_menu_acceso_youtube()
+            if service_youtube[1]==True:
+                logueo_youtube = 1
         elif opcion == '2':
             spotify = acceso_spotify()
             print(' --- LOGUEO EXITOSO ---')
             logueo_spotify = 1
         elif opcion == '3':
-            if logueo_youtube == 0:
+            if logueo_youtube==0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
-                listar_playlist_y_temas_youtube(credentials)
+                listar_playlist_y_temas_youtube(service_youtube[0])
         elif opcion == '4':
             if logueo_spotify == 0:
                 print('Antes de buscar información en Spotify, deberá loguearse en el MENU')
@@ -449,12 +527,12 @@ def main():
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
-                expotar_playlist_youtube(credentials)
+                expotar_playlist_youtube(service_youtube[0])
         elif opcion == '6':
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
-                crear_lista_de_reproduccion_youtube(credentials)
+                crear_lista_de_reproduccion_youtube(service_youtube[0])
         elif opcion == '7':
             if logueo_spotify == 0:
                 print('Antes de buscar información en Spotify, deberá loguearse en el MENU')
