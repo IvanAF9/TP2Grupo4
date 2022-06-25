@@ -486,6 +486,40 @@ def expotar_playlist_youtube(service_youtube):
         except UnicodeEncodeError:
             print('Hubo un error con la descipcion, por un caracter no aceptado')
 
+	
+def buscador_youtube(youtube):
+
+    print("Buscador de YouTube. Que desea ver?")
+    print("\nEscriba lo que quiera buscar (nombre de video, nombre de canal, cantante, etc)")
+    
+    busqueda: str = input("-- ")
+
+    y: int = -1
+
+    search_in_youtube = youtube.search().list(
+
+        order = "viewCount",
+        part = f"{busqueda}, snippet",
+        maxResults = 3
+
+    ).execute()
+
+    videos: list = []
+    
+    print("\nLos videos que se encontraron son (según reproducciones): ")
+
+    for resultado in search_in_youtube.get("items", []):
+
+        y += 1
+
+        if search_in_youtube[busqueda]["kind"] == "youtube#video":
+
+            videos.append("%s (%s)" % (resultado["snippet"]["title"],
+                                 resultado["id"]["videoId"]))
+
+        print(f"\n1- {videos[y]}")	
+	
+
 
 def main():
     logueo_spotify = 0
@@ -500,11 +534,12 @@ def main():
         print('5- Exportar una playlist de youtube')
         print('6- Crear una nueva playlist en Youtube')
         print('7- Buscar elementos en Spotify y agregarlos a una playlist')
-        print('8- SALIR')
-        opcion: str = input('Elija opcion (1,2,3,4,5,6,7,8): ')
-        while opcion not in ('1', '2', '3', '4', '5', '6', '7', '8'):
+        print('8- Buscar canciones/videos en YouTube.')
+        print('9- SALIR')
+        opcion: str = input('Elija opcion (1,2,3,4,5,6,7,8,9): ')
+        while opcion not in ('1', '2', '3', '4', '5', '6', '7', '8', '9'):
             opcion = input('Incorrecto, elija una opcion valida: ')
-
+	
         if opcion == '1':
             service_youtube = sub_menu_acceso_youtube()
             if service_youtube[1]==True:
@@ -539,6 +574,12 @@ def main():
             else:
                 buscador_spotify(spotify)
         elif opcion == '8':
+            if logueo_youtube == 0:
+                print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
+            else:
+                buscador_youtube(service_youtube[0])
+
+        elif opcion == '9':
             menu = 2
 
         if menu == 1:
