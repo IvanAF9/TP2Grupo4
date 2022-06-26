@@ -6,7 +6,7 @@ import csv
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-
+from lyricsgenius import Genius
 
 
 def acceso_youtube():
@@ -485,39 +485,160 @@ def expotar_playlist_youtube(service_youtube):
             datos.writerow(descripcion_general)
         except UnicodeEncodeError:
             print('Hubo un error con la descipcion, por un caracter no aceptado')
+	
+def mostrar_lyric(cancion: str):
+
+    respuesta: str = input("\nDesea ver la letra de la cancion?: (1 = Sí / ENTER = No)")
+
+    if(respuesta == '1'):
+
+        token_genius = "hzZzDlh8ecFwCdcMsyVeCCdC_PH62cDSEJgIPXTn2JSq1qlHnn2GcqvsZyN0p-9o" 
+
+        '''
+        Este token fue generado a partir de la cuenta mail del loco mauro.
+
+        '''
+        genius = Genius(token_genius)
+
+        if("Official Video" in cancion):
+
+            cancion = cancion.replace("(Official Video)", "")
+
+        if("Live" in cancion):
+
+            cancion = cancion.replace("(Live)", "")
+
+        song = genius.search_song(cancion)
+        
+        if(song != None):
+
+            print(song.lyrics)
+
+        else:
+
+            print("\nNo fue posible encontrar la letra.")	
 
 	
-def buscador_youtube(youtube):
+def buscador_youtube(youtube) -> None:
 
     print("Buscador de YouTube. Que desea ver?")
     print("\nEscriba lo que quiera buscar (nombre de video, nombre de canal, cantante, etc)")
     
     busqueda: str = input("-- ")
 
+    while(busqueda == ""):
+
+        busqueda = input("No puede buscar algo vacío: ")
+
     y: int = -1
 
     search_in_youtube = youtube.search().list(
 
+        q = busqueda,
         order = "viewCount",
-        part = f"{busqueda}, snippet",
+        part = "id, snippet",
         maxResults = 3
 
     ).execute()
 
     videos: list = []
     
-    print("\nLos videos que se encontraron son (según reproducciones): ")
+    print('Buscando videos...')
 
-    for resultado in search_in_youtube.get("items", []):
+    if(search_in_youtube["items"] == []):
 
-        y += 1
+        print("\n No se encontraron resultados.")
 
-        if search_in_youtube[busqueda]["kind"] == "youtube#video":
+    else:
 
-            videos.append("%s (%s)" % (resultado["snippet"]["title"],
-                                 resultado["id"]["videoId"]))
+        print("\nLos videos que se encontraron son (según reproducciones): ")
 
-        print(f"\n1- {videos[y]}")	
+        for resultado in search_in_youtube.get("items", []):
+
+            y += 1
+
+            if resultado["id"]["kind"] == "youtube#video":
+                
+                videos.append("%s (%s)" % (resultado["snippet"]["title"],
+                                    resultado["id"]["videoId"]))
+
+            print(f"\n{y+1}- {videos[y][0 : len(videos[y]) - 13]}")
+
+        print("\nDesea agregar alguna de las opciones a una playlist? (1 = Sí / ENTER = No)")
+        decision : str = input("Respuesta: ")
+
+        while(decision == '1' and len(videos) <= 3 and len(videos) != 0):
+
+            i: int = 0
+            list_video: list = []
+            
+            for v in videos:
+
+                i += 1
+                print(f'\n{i} - {v[0 : len(v) - 13]}')
+                list_video.append([i, v])
+
+
+            video_elegido: str = input("\nCual elemento va a agregar (1, 2, 3): ")
+
+            while(video_elegido != '1' and 
+                video_elegido != '2' and
+                video_elegido != '3'):
+
+                video_elegido = input('\nElija un video: ')
+        
+            elegido = list_video[int(video_elegido) - 1][1]
+
+            videoId = elegido[len(elegido) - 12 : len(elegido) - 1]
+
+            print("\nLas playlist disponibles son: ")
+
+            todas_las_playlist = listar_playlists_youtube(youtube)
+
+            i = 0 
+
+            for playlist in todas_las_playlist:
+
+                i += 1
+
+                print(f"{i} - {playlist['title']}")
+
+
+            print("\nA cuál lista lo queres agregar?: ")
+
+            playlist_elegida: str = input("\nPlaylist elegida: ")
+
+            num_playlist: int = int(playlist_elegida)
+
+
+            while(num_playlist > len(todas_las_playlist)): 
+
+                playlist_elegida = input("Playlist elegida: ")
+                num_playlist: int = int(playlist_elegida)
+
+
+            playlistId = todas_las_playlist[int(playlist_elegida) - 1]['playlistId']
+
+            print("Agregando videos...")
+
+            agregar_a_playlist_yt = youtube.playlistItems().insert(
+                    part='snippet',
+                    body={
+                        "snippet":{
+                            "playlistId": playlistId,
+                            "resourceId": {
+                                "kind": "youtube#video",
+                                "videoId": videoId,
+                            }
+                        }
+                    }
+                ).execute()
+
+            videos.remove(videos[int(video_elegido) - 1])
+
+            mostrar_lyric(elegido[0 : len(elegido) - 13])
+
+            decision = input("\nDesea agregar otro video?: ")	
 	
 
 
@@ -534,7 +655,7 @@ def main():
         print('5- Exportar una playlist de youtube')
         print('6- Crear una nueva playlist en Youtube')
         print('7- Buscar elementos en Spotify y agregarlos a una playlist')
-        print('8- Buscar canciones/videos en YouTube.')
+        print('8- Buscar canciones/videos en YouTube y agregarlos a una playlist.')
         print('9- SALIR')
         opcion: str = input('Elija opcion (1,2,3,4,5,6,7,8,9): ')
         while opcion not in ('1', '2', '3', '4', '5', '6', '7', '8', '9'):
