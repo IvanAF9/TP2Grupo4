@@ -63,10 +63,13 @@ def acceso_spotify() -> Spotify:
     cliente_secreto = '27e3e8415ef44fe997e731d830ec5541'
     redireccion_uri = 'https://github.com/IvanAF9/TP2Grupo4'
     conf = (id_cliente, cliente_secreto, redireccion_uri)
-
-    token_usuario = tk.prompt_for_user_token(*conf,
+    try:
+        token_usuario = tk.prompt_for_user_token(*conf,
                                              scope=tk.scope.every)  # pide permisos al usuario y redirecciona, devuelve token
-    return tk.Spotify(token_usuario)  # Inicia la conexion a la API Spotify
+        return tk.Spotify(token_usuario)  # Inicia la conexion a la API Spotify
+    except:
+        print('Error: URL incorrecta')
+    
 
 
 def listar_playlists(spotify: Spotify, solo_mostrar_titulo_playlist: str):
@@ -510,9 +513,8 @@ def expotar_playlist_youtube(service_youtube):
     )
     playlist = playlist.execute()
     nombre_videos = []
-    print("videos:")
+
     for item in playlist['items']:
-        print('_ ', item['snippet']['title'])
         nombres = item['snippet']['title']
         nombre_videos.append(nombres)
         descripcion = item['snippet']['description']
@@ -520,8 +522,8 @@ def expotar_playlist_youtube(service_youtube):
         channel_id = item['snippet']['channelId']
         time = item['snippet']['publishedAt']
 
-    nombre_playlist = ('-Playlist: ', titulo)
-    atributos = ('-Titulo de la playlist: ', titulo, '-Id del canal: ', channel_id, '-Tiempo de subida: ', time)
+    nombre_playlist = ('-Titulo de la playlist: : ', titulo)
+    atributos = ('-Id del canal: ', channel_id, '-Tiempo de subida: ', time)
     descripcion_general = ('-Descripcion general: ', descripcion)
 
     with open('archivo_playlists.csv', 'w', newline='') as lista:
@@ -749,8 +751,11 @@ def main():
                 logueo_youtube = 1
         elif opcion == '2':
             spotify = acceso_spotify()
-            print(' --- LOGUEO EXITOSO ---')
-            logueo_spotify = 1
+            if spotify != None:
+                print(' --- LOGUEO EXITOSO ---')
+                logueo_spotify = 1
+            else:
+                print('Fallo conexion con Spotify, vuelva a intertarlo ')
         elif opcion == '3':
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
