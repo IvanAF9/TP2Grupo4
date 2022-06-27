@@ -15,7 +15,7 @@ def acceso_youtube():
     if os.path.exists("token.pickle"):
         with open("token.pickle", "rb") as token:  # "rb" read binary
             credentials = pickle.load(token)
-    try:        
+    try:
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 print("Refrescando token de acceso...")
@@ -24,22 +24,23 @@ def acceso_youtube():
                 print("Esperando autorizacion...")
                 print()
                 flow = InstalledAppFlow.from_client_secrets_file("clave.json",
-                    scopes=["https://www.googleapis.com/auth/youtube"])
+                                                                 scopes=["https://www.googleapis.com/auth/youtube"])
 
-                flow.run_local_server(port=8080, prompt="consent", authorization_prompt_message="")#prompt es para recibir el token de actualizacion
+                flow.run_local_server(port=8080, prompt="consent",
+                                      authorization_prompt_message="")  # prompt es para recibir el token de actualizacion
                 credentials = flow.credentials
 
-                #Guardar las credenciales en un archivo pickle
+                # Guardar las credenciales en un archivo pickle
                 with open("token.pickle", "wb") as f:
                     print("Inicio de sesion exitoso")
                     pickle.dump(credentials, f)
 
-        service_youtube= build("youtube", "v3", credentials=credentials)         
+        service_youtube = build("youtube", "v3", credentials=credentials)
         return service_youtube
 
     except:
         print("No hay conexion a internet")
-                
+
         return None
 
 
@@ -47,28 +48,33 @@ def channel_request(service_youtube) -> str:
     canal = service_youtube.channels().list(part="statistics", mine=True).execute()
     id_canal = canal["items"][0]["id"]
     return id_canal
+
+
 def acceso_spotify() -> Spotify:
     '''Genera conexion con spotify a traves del id_cliente y cliente_secreto
     	PRE: No recibe nada
     	POS: Devuelve la conexion del tipo "Spotify" con la API'''
 
     print('\nEstá a punto de ser enviado a Spotify para pedir autorización a su cuenta.')
-    print(f'Luego de eso será redireccionado a otra pagina y el programa le pedirá que copie el link al que fue redireccionado.')
+    print(
+        f'Luego de eso será redireccionado a otra pagina y el programa le pedirá que copie el link al que fue redireccionado.')
     input_usuario = input('Presione ENTER para continuar: \n')
     id_cliente = '4e1bc2b1c16e4005b0b53b549ee818d4'
     cliente_secreto = '27e3e8415ef44fe997e731d830ec5541'
     redireccion_uri = 'https://github.com/IvanAF9/TP2Grupo4'
     conf = (id_cliente, cliente_secreto, redireccion_uri)
 
-    token_usuario = tk.prompt_for_user_token(*conf, scope=tk.scope.every) #pide permisos al usuario y redirecciona, devuelve token
-    return tk.Spotify(token_usuario) #Inicia la conexion a la API Spotify
+    token_usuario = tk.prompt_for_user_token(*conf,
+                                             scope=tk.scope.every)  # pide permisos al usuario y redirecciona, devuelve token
+    return tk.Spotify(token_usuario)  # Inicia la conexion a la API Spotify
+
 
 def listar_playlists(spotify: Spotify, solo_mostrar_titulo_playlist: str):
     '''Hace un print de las playlists del usuario actual por cancion y artista
 	PRE: Recibe la conexion del tipo "Spotify" con la API
 	POS: Devuelve playlist elegida por usuario solamente si solo_mostrar_titulo_playlist es igual a "si" '''
     lista_playlists_titulos: list = []
-    usuario = spotify.current_user() #obtiene datos del usuario logueado
+    usuario = spotify.current_user()  # obtiene datos del usuario logueado
     playlists = spotify.playlists(usuario.id)
     cantidad_playlists: int = 0
     for playlist_usuario in playlists.items:
@@ -80,7 +86,8 @@ def listar_playlists(spotify: Spotify, solo_mostrar_titulo_playlist: str):
                 lista_artistas = []
                 nombre_cancion = cancion.track.name
                 print(f'Cancion: {nombre_cancion}')
-                if hasattr(cancion.track, 'artists'): #comprueba si el objecto cancion.track contiene el atributo artists, ya que si no devuelve error
+                if hasattr(cancion.track,
+                           'artists'):  # comprueba si el objecto cancion.track contiene el atributo artists, ya que si no devuelve error
                     for artista in cancion.track.artists:
                         lista_artistas.append(artista.name)
                 if lista_artistas != []:
@@ -120,10 +127,28 @@ def listar_playlists(spotify: Spotify, solo_mostrar_titulo_playlist: str):
     En la documentación de tekore figuran los objetos y sus atributos que devuelven las funciones, esto esta en:
     https://tekore.readthedocs.io/en/stable/reference/client.html
     '''
+def mostrar_letra_cancion(usuario_eleccion_elemento, genius: Genius):
+    '''Busca y muestra letra de canciones buscadas por el usuario
+    PRE: Recibe el objeto usuario_eleccion_elemento con informacion de la cancion buscada y la conexion a la API de Genius
+    POS: No devuelve nada
+    '''
+    cancion = genius.search_song(usuario_eleccion_elemento.name, usuario_eleccion_elemento.artists[0].name)
+    print(f'\n{cancion.lyrics}')
 
 
-def mostrar_letra_cancion(spotify: Spotify):
-    pass
+def autorizacion_lyrics_genius()->Genius:
+    '''Sirve para devolver la conexion a la API de Genius
+    PRE: Contiene la informacion de id_client, cliente_secreto y token de acceso
+    POS: Devuelve la conexion del tipo Genius a su API
+    '''
+    id_cliente = 'piIkU0vJQShzcYoRAShmPcpyzZvgNHHKJVtMhyGh1Knddp2PNs-KITMBD2n9k5xh'
+    cliente_secreto = 'jRZMg5zpmYbrXIxyN4KiNWGc84pW-J7pRLdd4E5t4feebqUlejrUNpwnQ3OVKc1H7QWOmeKyc_Xl_q-UirucMw'
+    token_acceso_cliente = 'EHppP0Vw_U0Q7GkQIheMi_G-hWDr794lSPuiPc_4WTktXPfd0gkXe_fXznGM424j'
+    genius = Genius(token_acceso_cliente)
+
+    return genius
+
+
 def agregar_elemento_en_playlist(spotify: Spotify, usuario_eleccion_elemento):
     '''Agrega elementos encontrados a una playlist a eleccion
     PRE: Recibe la conexion del tipo "Spotify" con la API y el elemento elegido por el usuario
@@ -152,11 +177,13 @@ def accion_con_elementos_buscados(spotify: Spotify, usuario_eleccion_elemento):
             agregar_elemento_en_playlist(spotify, usuario_eleccion_elemento)
         elif pregunta_usuario == '2':
             if usuario_eleccion_elemento.type == 'track':
-                mostrar_letra_cancion(spotify)
+                genius = autorizacion_lyrics_genius()
+                mostrar_letra_cancion(usuario_eleccion_elemento, genius)
             else:
                 print('\nSolo se puede mostrar letra de canciones, y el elemento encontrado no lo es.')
         else:
             opcion = 0
+
 
 def buscador_spotify(spotify: Spotify):
     '''Permite al usuario hacer una busqueda
@@ -185,10 +212,20 @@ def buscador_spotify(spotify: Spotify):
 
         if len(listado_elementos_encontrados) > 3:
             for i in range(3):
-                print(f'{i + 1}: {listado_elementos_encontrados[i].name}')
+                lista_artistas = []
+                for artista in listado_elementos_encontrados[i].artists:
+                    lista_artistas.append(artista.name)
+                artistas_string = ' - '.join(lista_artistas)
+
+                print(f'{i + 1}: {listado_elementos_encontrados[i].name}. Artista/s: {artistas_string}')
         else:
             for i in range(len(listado_elementos_encontrados)):
-                print(f'{i + 1}: {listado_elementos_encontrados[i].name}')
+                lista_artistas = []
+                for artista in listado_elementos_encontrados[i].artists:
+                    lista_artistas.append(artista.name)
+                artistas_string = ' - '.join(lista_artistas)
+
+                print(f'{i + 1}: {listado_elementos_encontrados[i].name}. Artista/s: {artistas_string}')
 
         pregunta_usuario = input('\nQuiere usar alguno de los elementos? si/no ').lower()
         while pregunta_usuario not in ('si', 'no'):
@@ -210,7 +247,6 @@ def buscador_spotify(spotify: Spotify):
     else:
         print('\nNo se ha encontrado resultados para su busqueda')
 
-        
 
 def listar_playlists_youtube(service_youtube) -> list:
     requests = service_youtube.playlists().list(part="contentDetails, snippet", mine=True, maxResults=50)
@@ -227,11 +263,12 @@ def listar_playlists_youtube(service_youtube) -> list:
 
     return lista_aux
 
+
 def validar_ingreso_int(texto: str) -> int:
     select = input(texto)
     es_numerico = select.isnumeric()
 
-    while es_numerico!=True:
+    while es_numerico != True:
         print("Opcion invalida")
         select = input(texto)
         es_numerico = select.isnumeric()
@@ -244,8 +281,8 @@ def validar_ingreso_int(texto: str) -> int:
 def sub_menu_acceso_youtube():
     sesion_iniciada = False
     lista_usuarios: list = {
-            "UC_AWnHXFjISHh3Kn9CFWc6A":"ellocomauro376@gmail.com",
-            "channelId":"id de otro canal",
+        "UC_AWnHXFjISHh3Kn9CFWc6A": "ellocomauro376@gmail.com",
+        "channelId": "id de otro canal",
     }
     print()
     print("Administrar cuenta de Youtube:")
@@ -259,31 +296,31 @@ def sub_menu_acceso_youtube():
         print(opciones[i])
     texto = "Ingrese una opcion: "
     select = validar_ingreso_int(texto)
-    while select!=4:
-        while select>4:
+    while select != 4:
+        while select > 4:
             print("Opcion invalida")
             select = validar_ingreso_int(texto)
-        if select==1:
+        if select == 1:
             print()
             service_youtube = acceso_youtube()
             print("Sesion iniciada")
             sesion_iniciada = True
 
-        elif select ==2:
+        elif select == 2:
             print()
             if os.path.exists("token.pickle"):
                 service_youtube = acceso_youtube()
                 id_canal = channel_request(service_youtube)
-                print("Usuario actual:",lista_usuarios[id_canal])
+                print("Usuario actual:", lista_usuarios[id_canal])
                 sesion_iniciada = True
-                #hacer request para obtener el id del canal y asociarlo a la lista_usuario
-                #imprimir el nombre
+                # hacer request para obtener el id del canal y asociarlo a la lista_usuario
+                # imprimir el nombre
             else:
                 print("No existe usuario actual")
-        elif select==3:
+        elif select == 3:
             print()
             if os.path.exists("token.pickle"):
-                os.remove("token.pickle") 
+                os.remove("token.pickle")
                 service_youtube = acceso_youtube()
                 sesion_iniciada = True
             else:
@@ -296,81 +333,84 @@ def sub_menu_acceso_youtube():
 
     return service_youtube, sesion_iniciada
 
+
 def listar_playlist_y_temas_youtube(service_youtube):
     print("Cargardo listas...")
     lista_playlist = listar_playlists_youtube(service_youtube)
-    lista_playlist.append({"title":"Volver al menu"})
+    lista_playlist.append({"title": "Volver al menu"})
     i: int = 0
     print()
     print("Playlist:")
     for lista in lista_playlist:
-        i+=1
-        if i<len(lista_playlist):
-            print(i,"- ***",lista["title"],"***")
+        i += 1
+        if i < len(lista_playlist):
+            print(i, "- ***", lista["title"], "***")
         else:
-            print(i,"-",lista["title"])
+            print(i, "-", lista["title"])
     texto: str = "Seleccione el nro de lista para ver las canciones en ella o vuelva al menu: "
     select = validar_ingreso_int(texto)
     while select != len(lista_playlist):
-        if select>len(lista_playlist):
+        if select > len(lista_playlist):
             print("Opcion invalida")
             select = validar_ingreso_int(texto)
         else:
             print("Cargando canciones...")
             playlist = service_youtube.playlistItems().list(
                 part='snippet',
-                playlistId=lista_playlist[select-1]["playlistId"],
+                playlistId=lista_playlist[select - 1]["playlistId"],
                 maxResults=50
             )
-            
+
             playlist = playlist.execute()
             print()
 
-            if len(playlist["items"])==0:
-                    print("No hay canciones en esta playlist")
+            if len(playlist["items"]) == 0:
+                print("No hay canciones en esta playlist")
             else:
-                print("Playlist:",lista_playlist[select-1]["title"])
+                print("Playlist:", lista_playlist[select - 1]["title"])
                 print("Canciones:")
                 for item in playlist['items']:
-                        print('-', item['snippet']['title'])
+                    print('-', item['snippet']['title'])
 
             print()
             i = 0
             print("Playlist:")
             for lista in lista_playlist:
-                i+=1
-                if i<len(lista_playlist):
-                    print(i,"- ***",lista["title"],"***")
+                i += 1
+                if i < len(lista_playlist):
+                    print(i, "- ***", lista["title"], "***")
                 else:
-                    print(i,"-",lista["title"])
+                    print(i, "-", lista["title"])
             select = validar_ingreso_int(texto)
-    
+
+
 def ver_todos_los_temas_youtube(service_youtube) -> list:
     lista_playlist = listar_playlists_youtube(service_youtube)
     lista_aux: list = list()
     dicc_aux: dict = dict()
     for i in range(len(lista_playlist)):
         playlist = service_youtube.playlistItems().list(
-                    part='snippet',
-                    playlistId=lista_playlist[i]["playlistId"],
-                    maxResults=50
-                )
-                
+            part='snippet',
+            playlistId=lista_playlist[i]["playlistId"],
+            maxResults=50
+        )
+
         playlist = playlist.execute()
         for item in playlist['items']:
             dicc_aux = {
-                "title":item['snippet']['title'],
-                "videoid":item["snippet"]["resourceId"]["videoId"]
+                "title": item['snippet']['title'],
+                "videoid": item["snippet"]["resourceId"]["videoId"]
             }
             lista_aux.append(dicc_aux)
 
         for i in range(len(lista_aux)):
             for j in range(len(lista_aux)):
-                if i!=j and i<len(lista_aux) and j<len(lista_aux):
-                    if lista_aux[i]["videoid"]==lista_aux[j]["videoid"]:
+                if i != j and i < len(lista_aux) and j < len(lista_aux):
+                    if lista_aux[i]["videoid"] == lista_aux[j]["videoid"]:
                         lista_aux.remove(lista_aux[j])
 
-    return lista_aux 
+    return lista_aux
+
 
 def crear_lista_de_reproduccion_youtube(service_youtube):
     nueva_lista: str = input("Ingrese el nombre de la lista a crear: ")
@@ -390,55 +430,54 @@ def crear_lista_de_reproduccion_youtube(service_youtube):
     print("Lista creada")
     print("Cargando canciones...")
     lista_temas = ver_todos_los_temas_youtube(service_youtube)
-    lista_temas.append({"title":"Volver al menu"})
+    lista_temas.append({"title": "Volver al menu"})
     i: int = 0
     print()
     print("Canciones existentes en todas sus playlist:")
     for lista in lista_temas:
-        i+=1
-        if i<len(lista_temas):
-            print(i,"- ***",lista["title"],"***")
+        i += 1
+        if i < len(lista_temas):
+            print(i, "- ***", lista["title"], "***")
         else:
-            print(i,"-",lista["title"])
+            print(i, "-", lista["title"])
     texto: str = "Seleccion una cancion para listar en la playlist creada o vuelva al menu: "
     lista_playlist = listar_playlists_youtube(service_youtube)
     for title in lista_playlist:
-        if title["title"]==nueva_lista:
-            playlistId=title["playlistId"]
+        if title["title"] == nueva_lista:
+            playlistId = title["playlistId"]
             break
     select = validar_ingreso_int(texto)
     while select != len(lista_temas):
-        if select>len(lista_temas):
+        if select > len(lista_temas):
             print("Opcion invalida")
         else:
             print("Listando cancion...")
             insertar_tema = service_youtube.playlistItems().insert(
                 part='snippet',
                 body={
-                    "snippet":{
-                        "playlistId":playlistId,
-                        "resourceId":{
-                            "kind":"youtube#video",
-                            "videoId":lista_temas[select-1]["videoid"]
+                    "snippet": {
+                        "playlistId": playlistId,
+                        "resourceId": {
+                            "kind": "youtube#video",
+                            "videoId": lista_temas[select - 1]["videoid"]
                         }
                     }
 
                 }
             ).execute()
-            lista_temas.remove(lista_temas[select-1])
+            lista_temas.remove(lista_temas[select - 1])
             print("Elemento listado")
             print()
             print("Elementos restantes:")
             i = 0
             for lista in lista_temas:
-                i+=1
-                if i<len(lista_temas):
-                    print(i,"- ***",lista["title"],"***")
+                i += 1
+                if i < len(lista_temas):
+                    print(i, "- ***", lista["title"], "***")
                 else:
-                    print(i,"-",lista["title"])
-        select = validar_ingreso_int(texto)  
+                    print(i, "-", lista["title"])
+        select = validar_ingreso_int(texto)
 
-    
 
 def expotar_playlist_youtube(service_youtube):
     '''pre:recibe las credenciales
@@ -472,7 +511,7 @@ def expotar_playlist_youtube(service_youtube):
         channel_id = item['snippet']['channelId']
         time = item['snippet']['publishedAt']
 
-    nombre_playlist = ('-Playlist: ',titulo)
+    nombre_playlist = ('-Playlist: ', titulo)
     atributos = ('-Titulo de la playlist: ', titulo, '-Id del canal: ', channel_id, '-Tiempo de subida: ', time)
     descripcion_general = ('-Descripcion general: ', descripcion)
 
@@ -485,14 +524,14 @@ def expotar_playlist_youtube(service_youtube):
             datos.writerow(descripcion_general)
         except UnicodeEncodeError:
             print('Hubo un error con la descipcion, por un caracter no aceptado')
-	
-def mostrar_lyric(cancion: str):
 
+
+def mostrar_lyric(cancion: str):
     respuesta: str = input("\nDesea ver la letra de la cancion?: (1 = Sí / ENTER = No)")
 
-    if(respuesta == '1'):
+    if (respuesta == '1'):
 
-        token_genius = "hzZzDlh8ecFwCdcMsyVeCCdC_PH62cDSEJgIPXTn2JSq1qlHnn2GcqvsZyN0p-9o" 
+        token_genius = "hzZzDlh8ecFwCdcMsyVeCCdC_PH62cDSEJgIPXTn2JSq1qlHnn2GcqvsZyN0p-9o"
 
         '''
         Este token fue generado a partir de la cuenta mail del loco mauro.
@@ -500,52 +539,48 @@ def mostrar_lyric(cancion: str):
         '''
         genius = Genius(token_genius)
 
-        if("Official Video" in cancion):
-
+        if ("Official Video" in cancion):
             cancion = cancion.replace("(Official Video)", "")
 
-        if("Live" in cancion):
-
+        if ("Live" in cancion):
             cancion = cancion.replace("(Live)", "")
 
         song = genius.search_song(cancion)
-        
-        if(song != None):
+
+        if (song != None):
 
             print(song.lyrics)
 
         else:
 
-            print("\nNo fue posible encontrar la letra.")	
+            print("\nNo fue posible encontrar la letra.")
 
-	
+
 def buscador_youtube(youtube) -> None:
-
     print("Buscador de YouTube. Que desea ver?")
     print("\nEscriba lo que quiera buscar (nombre de video, nombre de canal, cantante, etc)")
-    
+
     busqueda: str = input("-- ")
 
-    while(busqueda == ""):
-
+    while (busqueda == ""):
         busqueda = input("No puede buscar algo vacío: ")
 
     y: int = -1
 
     search_in_youtube = youtube.search().list(
 
-        q = busqueda,
-        order = "viewCount",
-        part = "id, snippet",
-        maxResults = 3
+        q=busqueda,
+        order="viewCount",
+        part="id, snippet",
+        maxResults=3
 
     ).execute()
 
     videos: list = []
-    
+
     print('Buscando videos...')
 
-    if(search_in_youtube["items"] == []):
+    if (search_in_youtube["items"] == []):
 
         print("\n No se encontraron resultados.")
 
@@ -558,51 +593,45 @@ def buscador_youtube(youtube) -> None:
             y += 1
 
             if resultado["id"]["kind"] == "youtube#video":
-                
                 videos.append("%s (%s)" % (resultado["snippet"]["title"],
-                                    resultado["id"]["videoId"]))
+                                           resultado["id"]["videoId"]))
 
-            print(f"\n{y+1}- {videos[y][0 : len(videos[y]) - 13]}")
+            print(f"\n{y + 1}- {videos[y][0: len(videos[y]) - 13]}")
 
         print("\nDesea agregar alguna de las opciones a una playlist? (1 = Sí / ENTER = No)")
-        decision : str = input("Respuesta: ")
+        decision: str = input("Respuesta: ")
 
-        while(decision == '1' and len(videos) <= 3 and len(videos) != 0):
+        while (decision == '1' and len(videos) <= 3 and len(videos) != 0):
 
             i: int = 0
             list_video: list = []
-            
+
             for v in videos:
-
                 i += 1
-                print(f'\n{i} - {v[0 : len(v) - 13]}')
+                print(f'\n{i} - {v[0: len(v) - 13]}')
                 list_video.append([i, v])
-
 
             video_elegido: str = input("\nCual elemento va a agregar (1, 2, 3): ")
 
-            while(video_elegido != '1' and 
-                video_elegido != '2' and
-                video_elegido != '3'):
-
+            while (video_elegido != '1' and
+                   video_elegido != '2' and
+                   video_elegido != '3'):
                 video_elegido = input('\nElija un video: ')
-        
+
             elegido = list_video[int(video_elegido) - 1][1]
 
-            videoId = elegido[len(elegido) - 12 : len(elegido) - 1]
+            videoId = elegido[len(elegido) - 12: len(elegido) - 1]
 
             print("\nLas playlist disponibles son: ")
 
             todas_las_playlist = listar_playlists_youtube(youtube)
 
-            i = 0 
+            i = 0
 
             for playlist in todas_las_playlist:
-
                 i += 1
 
                 print(f"{i} - {playlist['title']}")
-
 
             print("\nA cuál lista lo queres agregar?: ")
 
@@ -610,36 +639,32 @@ def buscador_youtube(youtube) -> None:
 
             num_playlist: int = int(playlist_elegida)
 
-
-            while(num_playlist > len(todas_las_playlist)): 
-
+            while (num_playlist > len(todas_las_playlist)):
                 playlist_elegida = input("Playlist elegida: ")
                 num_playlist: int = int(playlist_elegida)
-
 
             playlistId = todas_las_playlist[int(playlist_elegida) - 1]['playlistId']
 
             print("Agregando videos...")
 
             agregar_a_playlist_yt = youtube.playlistItems().insert(
-                    part='snippet',
-                    body={
-                        "snippet":{
-                            "playlistId": playlistId,
-                            "resourceId": {
-                                "kind": "youtube#video",
-                                "videoId": videoId,
-                            }
+                part='snippet',
+                body={
+                    "snippet": {
+                        "playlistId": playlistId,
+                        "resourceId": {
+                            "kind": "youtube#video",
+                            "videoId": videoId,
                         }
                     }
-                ).execute()
+                }
+            ).execute()
 
             videos.remove(videos[int(video_elegido) - 1])
 
-            mostrar_lyric(elegido[0 : len(elegido) - 13])
+            mostrar_lyric(elegido[0: len(elegido) - 13])
 
-            decision = input("\nDesea agregar otro video?: ")	
-	
+            decision = input("\nDesea agregar otro video?: ")
 
 
 def main():
@@ -654,23 +679,23 @@ def main():
         print('4- Listar Playlists actuales para Spotify')
         print('5- Exportar una playlist de youtube')
         print('6- Crear una nueva playlist en Youtube')
-        print('7- Buscar elementos en Spotify y agregarlos a una playlist')
+        print('7- Buscar elementos en Spotify (Agregarlos a playlists o ver letras de canciones)')
         print('8- Buscar canciones/videos en YouTube y agregarlos a una playlist.')
         print('9- SALIR')
         opcion: str = input('Elija opcion (1,2,3,4,5,6,7,8,9): ')
         while opcion not in ('1', '2', '3', '4', '5', '6', '7', '8', '9'):
             opcion = input('Incorrecto, elija una opcion valida: ')
-	
+
         if opcion == '1':
             service_youtube = sub_menu_acceso_youtube()
-            if service_youtube[1]==True:
+            if service_youtube[1] == True:
                 logueo_youtube = 1
         elif opcion == '2':
             spotify = acceso_spotify()
             print(' --- LOGUEO EXITOSO ---')
             logueo_spotify = 1
         elif opcion == '3':
-            if logueo_youtube==0:
+            if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
                 listar_playlist_y_temas_youtube(service_youtube[0])
