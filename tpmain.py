@@ -676,6 +676,52 @@ def buscador_youtube(youtube) -> None:
             decision = input("\nDesea agregar otro video?: ")
 
 
+def expotar_playlist_spotify(spotify: Spotify):
+    '''pre:recibe la conexion con la api de spotify
+       pos:exportar una playlist y sus canciones a
+       un archivo csv
+    '''
+    playlists_elegida = listar_playlists(spotify, "si")
+
+    playlist_nombre = playlists_elegida.name
+    descripcion = [playlists_elegida.description]
+    nombre_usuario = playlists_elegida.owner.display_name
+    numero_canciones = playlists_elegida.tracks.total
+    
+    info = spotify.playlist(playlists_elegida.id)
+
+    lista_canciones = []
+   
+    for cancion in info.tracks.items:
+        
+        nombre_cancion = cancion.track.name
+        nombre_cancion = ['cancion : ',nombre_cancion]
+        
+        for artista in cancion.track.artists:
+            artista = artista.name
+        artista = ['artista : ',artista]
+        cancion = [nombre_cancion,artista]
+        lista_canciones.append(cancion)
+
+    nombre_usuario = ['Nombre del usuario: ',nombre_usuario]
+    playlist_nombre = ['Nombre de la playlist: ',playlist_nombre]
+    numero_canciones = ['Numero de canciones : ',numero_canciones]
+    descripcion = ['Descripcion : ',descripcion]
+
+    with open('archivo_playlists.csv', 'w', newline='') as lista:
+        datos = csv.writer(lista, delimiter=' ') 
+        datos.writerow(nombre_usuario)
+        datos.writerow(playlist_nombre)
+        datos.writerow('Nombre de las canciones :')
+        
+        for canciones in lista_canciones:
+            for cancion in canciones:
+                datos.writerow(cancion)
+                
+        datos.writerows(descripcion)
+        datos.writerow(numero_canciones)
+
+
 def main():
     logueo_spotify = 0
     logueo_youtube = 0
@@ -686,14 +732,15 @@ def main():
         print('2- Autenticarse en Spotify')
         print('3- Listar Playlists actuales para Youtube')
         print('4- Listar Playlists actuales para Spotify')
-        print('5- Exportar una playlist de youtube')
-        print('6- Crear una nueva playlist en Youtube')
-	print('7- Crear una nueva playlist en Spotify')
-        print('8- Buscar elementos en Spotify (Agregarlos a playlists o ver letras de canciones)')
-        print('9- Buscar canciones/videos en YouTube y agregarlos a una playlist.')
-        print('10- SALIR')
-        opcion: str = input('Elija opcion (1,2,3,4,5,6,7,8,9,10): ')
-        while opcion not in ('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'):
+        print('5- Exportar una playlist de Youtube')
+        print('6- Exportar una playlist de Spotify')
+        print('7- Crear una nueva playlist en Youtube')
+        print('8- Crear una nueva playlist en Spotify')
+        print('9- Buscar elementos en Spotify (Agregarlos a playlists o ver letras de canciones)')
+        print('10- Buscar canciones/videos en YouTube y agregarlos a una playlist.')
+        print('11- SALIR')
+        opcion: str = input('Elija opcion (1,2,3,4,5,6,7,8,9,10,11): ')
+        while opcion not in ('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'):
             opcion = input('Incorrecto, elija una opcion valida: ')
 
         if opcion == '1':
@@ -720,27 +767,32 @@ def main():
             else:
                 expotar_playlist_youtube(service_youtube[0])
         elif opcion == '6':
+            if logueo_spotify == 0:
+                print('Antes de buscar información en Spotify, deberá loguearse en el MENU')
+            else:
+                expotar_playlist_spotify(spotify)
+        elif opcion == '7':
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
                 crear_lista_de_reproduccion_youtube(service_youtube[0])
-        elif opcion == '7':
+        elif opcion == '8':
             if logueo_spotify == 0:
                 print('Antes de buscar información en Spotify, deberá loguearse en el MENU')
             else:
-                crear_playlist_spotify(spotify: Spotify)
-	elif opcion == '8':
+                crear_playlist_spotify(spotify)
+        elif opcion == '9':
             if logueo_spotify == 0:
                 print('Antes de buscar información en Spotify, deberá loguearse en el MENU')
             else:
                 buscador_spotify(spotify)
-        elif opcion == '9':
+        elif opcion == '10':
             if logueo_youtube == 0:
                 print('Antes de buscar información en Youtube, deberá loguearse en el MENU')
             else:
                 buscador_youtube(service_youtube[0])
 
-        elif opcion == '10':
+        elif opcion == '11':
             menu = 2
 
         if menu == 1:
