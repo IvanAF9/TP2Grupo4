@@ -402,17 +402,20 @@ def listar_playlist_y_temas_youtube(service_youtube) -> None:
     """ PRE: recibe la conexion del tipo "Service_youtube" con la API
         POS: no devuelve nada""" 
     print("Cargardo listas...")
-    lista_playlist = mostrar_playlist_youtube(service_youtube)
-    texto: str = "Seleccione el nro de lista para ver las canciones en ella o vuelva al menu: "
-    select = validar_ingreso_int(texto)
-    while select != len(lista_playlist):
-        if select<1 or select>len(lista_playlist):
-            print("Opcion invalida")
-            select = validar_ingreso_int(texto)
-        else:
-            lista_canciones = mostrar_canciones_playlist_youtube(service_youtube,select,lista_playlist)
-            lista_playlist = mostrar_playlist_youtube(service_youtube)
-            select = validar_ingreso_int(texto)
+    try:
+        lista_playlist = mostrar_playlist_youtube(service_youtube)
+        texto: str = "Seleccione el nro de lista para ver las canciones en ella o vuelva al menu: "
+        select = validar_ingreso_int(texto)
+        while select != len(lista_playlist):
+            if select<1 or select>len(lista_playlist):
+                print("Opcion invalida")
+                select = validar_ingreso_int(texto)
+            else:
+                lista_canciones = mostrar_canciones_playlist_youtube(service_youtube,select,lista_playlist)
+                lista_playlist = mostrar_playlist_youtube(service_youtube)
+                select = validar_ingreso_int(texto)
+    except:
+        print("Ha ocurrido un error, por favor intentelo de nuevo")
 
 def ver_todos_los_temas_youtube(service_youtube) -> list:
     """ PRE: recibe la conexion del tipo "Service_youtube" con la API
@@ -484,50 +487,60 @@ def crear_lista_de_reproduccion_youtube(service_youtube) -> None:
     """Invoca las funciones necesarias para crear una playlist y agregarle canciones o videos"""
     """ PRE: recibe la conexion del tipo "Service_youtube" con la API, 
         POS: no devulve nada"""
-    nueva_lista: str = input("Ingrese el nombre de la lista a crear: ")
-    nombre = nueva_lista.isalnum()
-    while nombre == False:
-        nueva_lista = input("Ingrese un nombre para la lista: ")
-        nombre = nueva_lista.isalnum()
-    print("Creando lista de reproduccion...")
-    crear_playlist_youtube(service_youtube, nueva_lista)
-    print("Lista creada")
-    print("Cargando canciones...")
-    time.sleep(3)
-    lista_playlist = listar_playlists_youtube(service_youtube)
-    ultima_playlistId = lista_playlist[0]["playlistId"]
-    lista_temas = ver_todos_los_temas_youtube(service_youtube)
-    lista_temas.append({"title":"Volver al menu"})
-    i: int = 0
-    print()
-    print("Canciones existentes en todas sus playlist:")
-    for lista in lista_temas:
-        i+=1
-        if i<len(lista_temas):
-            print(i,"- ***",lista["title"],"***")
-        else:
-            print(i,"-",lista["title"])
-    texto: str = "Seleccion una cancion para listar en la playlist creada o vuelva al menu: "
-    select = validar_ingreso_int(texto)
-    while select != len(lista_temas):
-        if select<1 or select>len(lista_temas):
-            print("Opcion invalida")
-        else:
-            videoId = lista_temas[select-1]["videoid"]
-            print("Listando cancion...")
-            insertar_en_playlist_youtube(service_youtube, ultima_playlistId, videoId)
-            lista_temas.remove(lista_temas[select-1])
-            print("Elemento listado")
-            print()
-            print("Elementos restantes:")
-            i = 0
-            for lista in lista_temas:
-                i+=1
-                if i<len(lista_temas):
-                    print(i,"- ***",lista["title"],"***")
-                else:
-                    print(i,"-",lista["title"])
-        select = validar_ingreso_int(texto)  
+    try:
+        nueva_lista: str = input("Ingrese el nombre de la lista a crear: ")
+        no_valido: bool = True
+        while no_valido == True:
+            todos_espacios: int = 0
+            for caracter in nueva_lista:
+                if caracter == " ":
+                    todos_espacios += 1
+            if todos_espacios == len(nueva_lista):
+                no_valido =True
+                nueva_lista = input("Ingrese un nombre para la lista: ")
+            else:
+                no_valido = False
+        print("Creando lista de reproduccion...")
+        crear_playlist_youtube(service_youtube, nueva_lista)
+        print("Lista creada")
+        print("Cargando canciones...")
+        time.sleep(3)
+        lista_playlist = listar_playlists_youtube(service_youtube)
+        ultima_playlistId = lista_playlist[0]["playlistId"]
+        lista_temas = ver_todos_los_temas_youtube(service_youtube)
+        lista_temas.append({"title":"Volver al menu"})
+        i: int = 0
+        print()
+        print("Canciones existentes en todas sus playlist:")
+        for lista in lista_temas:
+            i+=1
+            if i<len(lista_temas):
+                print(i,"- ***",lista["title"],"***")
+            else:
+                print(i,"-",lista["title"])
+        texto: str = "Seleccion una cancion para listar en la playlist creada o vuelva al menu: "
+        select = validar_ingreso_int(texto)
+        while select != len(lista_temas):
+            if select<1 or select>len(lista_temas):
+                print("Opcion invalida")
+            else:
+                videoId = lista_temas[select-1]["videoid"]
+                print("Listando cancion...")
+                insertar_en_playlist_youtube(service_youtube, ultima_playlistId, videoId)
+                lista_temas.remove(lista_temas[select-1])
+                print("Elemento listado")
+                print()
+                print("Elementos restantes:")
+                i = 0
+                for lista in lista_temas:
+                    i+=1
+                    if i<len(lista_temas):
+                        print(i,"- ***",lista["title"],"***")
+                    else:
+                        print(i,"-",lista["title"])
+            select = validar_ingreso_int(texto)  
+    except:
+        print("Ha ocurrido un error, por favor intentelo de nuevo")
 
 def expotar_playlist_youtube(service_youtube):
     '''pre:recibe las credenciales
@@ -709,7 +722,7 @@ def buscador_youtube(youtube) -> None:
 
             videos.remove(videos[int(video_elegido) - 1])
 	
-	    resp_1: str = input("\nSu video es una canción? (1 = Sí / ENTER = No)")
+            resp_1: str = input("\nSu video es una canción? (1 = Sí / ENTER = No)")
 	
             if(resp_1 == '1'):
 
@@ -954,91 +967,94 @@ def sincronizar_playlist(service_youtube, spotify) -> None:
         print("Opcion invalida")
         select_main = validar_ingreso_int(texto_0)
     print()
-    select_lista: int = int()
-    lista_playlist: list = list()
-    nombre_cancion: str = str()
-    ultima_playlistId: str = str()
-    titulo: str = str()
-    print("Cargando listas...")
-    lista_playlist = selector(
-        spotify, service_youtube, select_main, "lista_playlist", 
-        select_lista, lista_playlist, titulo, nombre_cancion, 
-        ultima_playlistId, elementos_no_encontrados)
-    texto_1: str = "Seleccione el nro de lista para ver las canciones en ella o vuelva al menu: "
-    texto_2: str = "¿Desea exportar esta playlist?: "
-    select_lista = validar_ingreso_int(texto_1)
-    select: int = int()
-    while select_lista != len(lista_playlist):
-        if select_lista<1 or select_lista>len(lista_playlist):
-            print("Opcion invalida")
-            select_lista = validar_ingreso_int(texto_1)
-        else:
-            lista_canciones = selector(
-                spotify, service_youtube, select_main, "lista_canciones", 
-                select_lista, lista_playlist, titulo, nombre_cancion, 
-                ultima_playlistId, elementos_no_encontrados
-            )
-            if len(lista_canciones)==0:
-                select=2
-            else:     
-                print()
-                print("1 - Si")
-                print("2 - No")
-                select = validar_ingreso_int(texto_2)
-            while select not in [1,2]:
+    try:
+        select_lista: int = int()
+        lista_playlist: list = list()
+        nombre_cancion: str = str()
+        ultima_playlistId: str = str()
+        titulo: str = str()
+        print("Cargando listas...")
+        lista_playlist = selector(
+            spotify, service_youtube, select_main, "lista_playlist", 
+            select_lista, lista_playlist, titulo, nombre_cancion, 
+            ultima_playlistId, elementos_no_encontrados)
+        texto_1: str = "Seleccione el nro de lista para ver las canciones en ella o vuelva al menu: "
+        texto_2: str = "¿Desea exportar esta playlist?: "
+        select_lista = validar_ingreso_int(texto_1)
+        select: int = int()
+        while select_lista != len(lista_playlist):
+            if select_lista<1 or select_lista>len(lista_playlist):
                 print("Opcion invalida")
-                select = validar_ingreso_int(texto_2)
-            if select == 2:
-                print()
-                print("Playlist:")
-                i = 0
-                for lista in lista_playlist:
-                    i+=1
-                    if i<len(lista_playlist):
-                        print(i,"- ***",lista["title"],"***")
-                    else:
-                        print(i,"-",lista["title"])
                 select_lista = validar_ingreso_int(texto_1)
-            
-            elif select == 1:
-                titulo = lista_playlist[select_lista-1]["title"]
-                print()
-                print("Sincronizando...")
-                try:
-                    ultima_playlistId = selector(
-                        spotify, service_youtube, select_main, "crear_lista", 
-                        select_lista, lista_playlist, titulo, nombre_cancion, 
-                        ultima_playlistId, elementos_no_encontrados
-                    )
-                    for nombre_cancion in lista_canciones:
-                        elementos_no_disponibles=selector(
-                            spotify, service_youtube, select_main, "buscador", 
+            else:
+                lista_canciones = selector(
+                    spotify, service_youtube, select_main, "lista_canciones", 
+                    select_lista, lista_playlist, titulo, nombre_cancion, 
+                    ultima_playlistId, elementos_no_encontrados
+                )
+                if len(lista_canciones)==0:
+                    select=2
+                else:     
+                    print()
+                    print("1 - Si")
+                    print("2 - No")
+                    select = validar_ingreso_int(texto_2)
+                while select not in [1,2]:
+                    print("Opcion invalida")
+                    select = validar_ingreso_int(texto_2)
+                if select == 2:
+                    print()
+                    print("Playlist:")
+                    i = 0
+                    for lista in lista_playlist:
+                        i+=1
+                        if i<len(lista_playlist):
+                            print(i,"- ***",lista["title"],"***")
+                        else:
+                            print(i,"-",lista["title"])
+                    select_lista = validar_ingreso_int(texto_1)
+                
+                elif select == 1:
+                    titulo = lista_playlist[select_lista-1]["title"]
+                    print()
+                    print("Sincronizando...")
+                    try:
+                        ultima_playlistId = selector(
+                            spotify, service_youtube, select_main, "crear_lista", 
                             select_lista, lista_playlist, titulo, nombre_cancion, 
                             ultima_playlistId, elementos_no_encontrados
                         )
-                    print()
-                    print("Playlist sincronizada")
-                    if len(elementos_no_disponibles[0])>0:
+                        for nombre_cancion in lista_canciones:
+                            elementos_no_disponibles=selector(
+                                spotify, service_youtube, select_main, "buscador", 
+                                select_lista, lista_playlist, titulo, nombre_cancion, 
+                                ultima_playlistId, elementos_no_encontrados
+                            )
                         print()
-                        titulo_archivo_csv = elementos_no_disponibles[1]
-                        print("Elementos no encontrados:")
-                        for elemento in elementos_no_disponibles[0]:
-                            print("-",elemento)
-                        expotar_elementos_no_encontrados(
-                            titulo_archivo_csv, elementos_no_disponibles[0])
-                        elementos_no_encontrados = []
-                    print()
-                except:
-                    print("Ha ocurrido un error durante la sincronizacion, por favor intentelo de nuevo")
-                print("Playlist:")
-                i = 0
-                for lista in lista_playlist:
-                    i+=1
-                    if i<len(lista_playlist):
-                        print(i,"- ***",lista["title"],"***")
-                    else:
-                        print(i,"-",lista["title"])
-                select_lista = validar_ingreso_int(texto_1)       
+                        print("Playlist sincronizada")
+                        if len(elementos_no_disponibles[0])>0:
+                            print()
+                            titulo_archivo_csv = elementos_no_disponibles[1]
+                            print("Elementos no encontrados:")
+                            for elemento in elementos_no_disponibles[0]:
+                                print("-",elemento)
+                            expotar_elementos_no_encontrados(
+                                titulo_archivo_csv, elementos_no_disponibles[0])
+                            elementos_no_encontrados = []
+                        print()
+                    except:
+                        print("Ha ocurrido un error durante la sincronizacion, por favor intentelo de nuevo")
+                    print("Playlist:")
+                    i = 0
+                    for lista in lista_playlist:
+                        i+=1
+                        if i<len(lista_playlist):
+                            print(i,"- ***",lista["title"],"***")
+                        else:
+                            print(i,"-",lista["title"])
+                    select_lista = validar_ingreso_int(texto_1)
+    except:
+        print("Ha ocurrido un error, por favor intentelo de nuevo")       
 
 def menu() -> int:
     """Menu"""
@@ -1061,6 +1077,7 @@ def menu() -> int:
         "Analizar una playlist",
         "Salir"
     ]
+    print("***MENU***")
     for opcion in lista_menu:
         i += 1
         print(i,"-",opcion)
