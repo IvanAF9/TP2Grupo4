@@ -673,7 +673,13 @@ def buscador_youtube(youtube) -> None:
 
             videos.remove(videos[int(video_elegido) - 1])
 
-            mostrar_lyric(elegido[0: len(elegido) - 13])
+            if(resp_1 == '1'):
+
+                resp_2: str = input("Quiere ver su letra?")
+
+                if(resp_2 == '1'):
+
+                    mostrar_lyric(elegido[0: len(elegido) - 13])
 
             decision = input("\nDesea agregar otro video?: ")
 
