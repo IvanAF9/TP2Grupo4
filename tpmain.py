@@ -1090,7 +1090,7 @@ def main():
             listar_playlists(spotify, 'no')
         elif select_menu == 5 and sesion_youtube == True:
             expotar_playlist_youtube(service_youtube[0])
-        elif select_menu == 6 and sesion_youtube == True:
+        elif select_menu == 6 and sesion_spotify == True:
                 expotar_playlist_spotify(spotify)
         elif select_menu == 7 and sesion_youtube == True:
             crear_lista_de_reproduccion_youtube(service_youtube[0])
