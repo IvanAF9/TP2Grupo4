@@ -708,7 +708,9 @@ def buscador_youtube(youtube) -> None:
             ).execute()
 
             videos.remove(videos[int(video_elegido) - 1])
-
+	
+	    resp_1: str = input("\nSu video es una canción? (1 = Sí / ENTER = No)")
+	
             if(resp_1 == '1'):
 
                 resp_2: str = input("Quiere ver su letra?")
