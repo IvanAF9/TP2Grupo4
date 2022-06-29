@@ -1183,46 +1183,6 @@ def ranking_palabras_Spotify(spotify: Spotify) -> None:
 
     nube_de_palabras(lista_letras)
 	
-
-def menu_analizar_playlist(youtube, spotify: Spotify):
-
-    '''
-    PRE: Recibe las keys para las api's de YT y Spotify.
-    POST: No retorna nada, solo muestra el sub menu para analizar playlist.
-    '''
-
-    print("\nEn este menú podrá hacer el ranking de palabras más usadas;")
-    print("o una nube de palabras con las letras de canciones.")
-    print("\nQue quiere hacer? La Nube (1) o el ranking (2)?")
-    respuesta: str = input("Respuesta: ")
-
-    while(respuesta != '1' and respuesta != '2'):
-
-        respuesta: str = input("Respuesta correcta: ")
-
-    if(respuesta == '1'):
-
-        pass
-
-
-    if(respuesta == '2'):
-
-        print('\nPara cual app quiere el top? (1 = YT / 2 = Spotify)')
-
-        respuesta: str = input("Respuesta: ")
-
-        while(respuesta != '1' and respuesta != '2'):
-
-            respuesta: str = input("Respuesta correcta: ")
-
-        if(respuesta == '1'):
-
-            ranking_palabras_YT(youtube)
-
-        if(respuesta == '2'):
-
-            ranking_palabras_Spotify(spotify)
-	
 	
 def menu() -> int:
     """Menu"""
@@ -1242,7 +1202,6 @@ def menu() -> int:
         "Buscar canciones/videos en YouTube y agregarlos a una playlist",
         "Buscar elementos en Spotify (Agregarlos a playlists o ver letras de canciones)",
         "Sincronizar una playlist en ambas plataformas",
-        "Analizar una playlist",
         "Nube de palabras de una playlist",
         "Salir"
     ]
@@ -1261,7 +1220,7 @@ def main():
     select_menu = menu()
     sesion_youtube: bool = False
     sesion_spotify: bool = False
-    while select_menu != 14:
+    while select_menu != 13:
         if select_menu == 1:
             service_youtube = sub_menu_acceso_youtube()
             sesion_youtube = service_youtube[1]
@@ -1290,9 +1249,7 @@ def main():
             buscador_spotify(spotify)
         elif select_menu == 11 and sesion_youtube == True and sesion_spotify == True:
                 sincronizar_playlist(service_youtube[0], spotify)
-        elif select_menu ==12 and sesion_youtube == True and sesion_spotify == True:
-            menu_analizar_playlist(service_youtube[0], spotify)
-        elif select_menu ==13 :
+        elif select_menu == 12 :
             print('Desea realizarlo a travez de spotify o Youtube?')
             opcion = input('Ingrese opcion s/y: ')
             if opcion == 'y' and sesion_youtube == True:
