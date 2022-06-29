@@ -51,12 +51,12 @@ def acceso_youtube():
         return None
 
 def channel_request(service_youtube) -> str:
-    """Obtiene la id del canal de la sesion actual para youtube"""
+    """Obtiene el nombre del canal de la sesion actual para youtube"""
     """ PRE: recibe la conexion del tipo "Service_youtube" con la API
-        POS: devuelve el id del canal de youtube """
-    canal = service_youtube.channels().list(part="statistics", mine=True).execute()
-    id_canal = canal["items"][0]["id"]
-    return id_canal
+        POS: devuelve el nombre del canal de youtube """
+    canal = service_youtube.channels().list(part="snippet", mine=True).execute()
+    nombre_canal = canal["items"][0]["snippet"]["title"]
+    return nombre_canal
 
 def acceso_spotify() -> Spotify:
     '''Genera conexion con spotify a traves del id_cliente y cliente_secreto
@@ -302,10 +302,6 @@ def sub_menu_acceso_youtube() -> tuple:
         y la confirmacion del inicio de sesion en youtube"""
     service_youtube = None
     sesion_iniciada = False
-    lista_usuarios: list = {
-        "UC_AWnHXFjISHh3Kn9CFWc6A": "ellocomauro376@gmail.com",
-        "channelId": "id de otro canal",
-    }
     print()
     print("Administrar cuenta de Youtube:")
     opciones: list = [
@@ -333,8 +329,8 @@ def sub_menu_acceso_youtube() -> tuple:
                 print()
                 if os.path.exists("token.pickle"):
                     service_youtube = acceso_youtube()
-                    id_canal = channel_request(service_youtube)
-                    print("Usuario actual:", lista_usuarios[id_canal])
+                    nombre_canal = channel_request(service_youtube)
+                    print("Usuario actual:", nombre_canal)
                     sesion_iniciada = True
                     # hacer request para obtener el id del canal y asociarlo a la lista_usuario
                     # imprimir el nombre
