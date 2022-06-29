@@ -588,33 +588,35 @@ def expotar_playlist_youtube(service_youtube):
             print('Hubo un error con la descipcion, por un caracter no aceptado')
 
 def mostrar_lyric(cancion: str):
-    respuesta: str = input("\nDesea ver la letra de la cancion?: (1 = Sí / ENTER = No)")
+	
+    token_genius = "hzZzDlh8ecFwCdcMsyVeCCdC_PH62cDSEJgIPXTn2JSq1qlHnn2GcqvsZyN0p-9o"
 
-    if (respuesta == '1'):
+    '''
+    Este token fue generado a partir de la cuenta mail del loco mauro.
+    
+    '''
+    genius = Genius(token_genius)
 
-        token_genius = "hzZzDlh8ecFwCdcMsyVeCCdC_PH62cDSEJgIPXTn2JSq1qlHnn2GcqvsZyN0p-9o"
+    if ("Official Video" in cancion 
+        or "Live" in cancion
+        or "Video Oficial" in cancion):
 
-        '''
-        Este token fue generado a partir de la cuenta mail del loco mauro.
+        cancion = cancion.replace("(Official Video)", "")
+        cancion = cancion.replace("(Live)", "")
+        cancion = cancion.replace("(Video Oficial)", "")
 
-        '''
-        genius = Genius(token_genius)
+    song = genius.search_song(cancion)
 
-        if ("Official Video" in cancion):
-            cancion = cancion.replace("(Official Video)", "")
+    if(song == None):
 
-        if ("Live" in cancion):
-            cancion = cancion.replace("(Live)", "")
+        song = ""
 
-        song = genius.search_song(cancion)
+    else:
 
-        if (song != None):
+        song = str(song)
 
-            print(song.lyrics)
+    return song
 
-        else:
-
-            print("\nNo fue posible encontrar la letra.")
 
 def buscador_youtube(youtube) -> None:
     print("Buscador de YouTube. Que desea ver?")
@@ -725,12 +727,17 @@ def buscador_youtube(youtube) -> None:
             resp_1: str = input("\nSu video es una canción? (1 = Sí / ENTER = No)")
 	
             if(resp_1 == '1'):
+                
+                resp_2:str = input("\nQuiere ver su letra? (1 = Sí / ENTER = No)")
+                letra:str = mostrar_lyric(elegido[0: len(elegido) - 13])
 
-                resp_2: str = input("Quiere ver su letra?")
+                if(letra == ""):
 
-                if(resp_2 == '1'):
+                    print("\nNo fue posible encontrar la letra.")
 
-                    mostrar_lyric(elegido[0: len(elegido) - 13])
+                else:
+                
+                    print(letra)
 
             decision = input("\nDesea agregar otro video?: ")
 
@@ -1056,6 +1063,140 @@ def sincronizar_playlist(service_youtube, spotify) -> None:
     except:
         print("Ha ocurrido un error, por favor intentelo de nuevo")       
 
+def ranking_palabras_YT(youtube) -> None:
+
+    i = 0
+
+    print('\nPara cual playlist de YT va a querer su ranking?')
+
+    todas_las_playlist = listar_playlists_youtube(youtube)
+
+    for playlist in todas_las_playlist:
+
+        i += 1
+
+        print(f"{i} - {playlist['title']}")
+    
+
+    respuesta = int(input("\nDe cuál playlist querrá el ranking?"))
+
+    respuesta = respuesta - 1 # La respuesta le resto uno para que coincida con la posicion real de la playlist.
+                              # Ya que en los diccionarios se empieza a contar desde el 0 (cero).
+    
+    playlist_elegida = todas_las_playlist[respuesta]
+
+    lista_letras: list = []
+
+    elementos_de_playlist = youtube.playlistItems().list(
+
+        playlistId = playlist_elegida['playlistId'],
+        part = "snippet",
+        maxResults = 50
+    ).execute()
+
+    for video in elementos_de_playlist["items"]:
+
+        # print(video)
+
+        titulo_video = video["snippet"]["title"]
+
+        letra: str = mostrar_lyric(titulo_video)
+        
+        if(letra != ""):
+
+            lista_letras.append(letra)
+
+
+    top_10_palabras(lista_letras)
+
+
+def ranking_palabras_Spotify(spotify: Spotify) -> None:
+
+    l_playlist: list = []
+    lista_letras: list = []
+    y: int = 0
+    p: int = 0
+
+    usuario = spotify.current_user() 
+    playlists = spotify.playlists(usuario.id)
+
+    for playlist_usuario in playlists.items:
+
+        y += 1
+        # playlist_actual = spotify.playlist(playlist_usuario.id)
+
+        nombre_playlist = playlist_usuario.name
+
+        print(f'\n{y} --> {nombre_playlist}. \n')
+
+    escoger_playlist: int = int(input("Cual playlist elegís: "))
+
+    while(escoger_playlist > y):
+
+        escoger_playlist: int = int(input("Cual playlist elegís: "))
+
+
+    for playlist_usuario in playlists.items:
+
+        p += 1
+
+        if(p == escoger_playlist):
+
+            playlist_elegida = spotify.playlist(playlist_usuario.id)
+
+            for cancion in playlist_elegida.tracks.items:
+
+                nombre_cancion = cancion.track.name
+
+                letra = mostrar_lyric(nombre_cancion)
+
+                if(letra != ""):
+
+                    lista_letras.append(letra)
+
+    top_10_palabras(lista_letras)
+	
+	
+def menu_analizar_playlist(youtube, spotify: Spotify):
+
+    '''
+    PRE: Recibe las keys para las api's de YT y Spotify.
+    POST: No retorna nada, solo muestra el sub menu para analizar playlist.
+    '''
+
+    print("\nEn este menú podrá hacer el ranking de palabras más usadas;")
+    print("o una nube de palabras con las letras de canciones.")
+    print("\nQue quiere hacer? La Nube (1) o el ranking (2)?")
+    respuesta: str = input("Respuesta: ")
+
+    while(respuesta != '1' and respuesta != '2'):
+
+        respuesta: str = input("Respuesta correcta: ")
+
+    if(respuesta == '1'):
+
+        pass
+
+
+    if(respuesta == '2'):
+
+        print('\nPara cual app quiere el top? (1 = YT / 2 = Spotify)')
+
+        respuesta: str = input("Respuesta: ")
+
+        while(respuesta != '1' and respuesta != '2'):
+
+            respuesta: str = input("Respuesta correcta: ")
+
+        if(respuesta == '1'):
+
+            ranking_palabras_YT(youtube)
+
+        if(respuesta == '2'):
+
+            ranking_palabras_Spotify(spotify)
+	
+	
 def menu() -> int:
     """Menu"""
     """ PRE: no recibe nada
@@ -1122,7 +1263,7 @@ def main():
         elif select_menu == 11 and sesion_youtube == True and sesion_spotify == True:
                 sincronizar_playlist(service_youtube[0], spotify)
         elif select_menu ==12 and sesion_youtube == True and sesion_spotify == True:
-            pass  #funcion para analizar playlist
+            menu_analizar_playlist(service_youtube[0], spotify)
         elif select_menu in [3,5,7,9,11,12] and sesion_youtube == False:
             print("Antes debe iniciar sesion en youtube")
         elif select_menu in [4,6,8,10,11,12] and sesion_spotify == False:
