@@ -1063,6 +1063,80 @@ def sincronizar_playlist(service_youtube, spotify) -> None:
     except:
         print("Ha ocurrido un error, por favor intentelo de nuevo")       
 
+def top_10_palabras(lista_letras: list) -> None:
+
+    '''
+    
+    PRE: Recibe la lista con todas las palabras de una playlist.
+    POST: Escribe el top de palabras o devuelve un mensaje de vacío.
+
+    '''
+
+    if(lista_letras != []):
+
+        eliminar: str = ",;:.\n!['](\)" #Esta cadena tiene como función ayudarnos a eliminar
+                                #Caracteres molestos en las letras de las canciones.
+
+        dic_frecuencia: dict = {}
+        top: list = []
+
+        for letra_completa in lista_letras:
+
+            for caracter in eliminar:
+
+                letra_completa = letra_completa.replace(caracter, "")
+
+
+            letra_completa = letra_completa.lower() #Lo ponemos en minúscula para evitar posibles errores.
+            letra_completa = letra_completa.split(" ") #Lo convierto en una lista de palabras.
+
+            for palabra in letra_completa:
+
+                if palabra in dic_frecuencia:
+
+                    dic_frecuencia[palabra] += 1
+
+                else:
+                    
+                    dic_frecuencia[palabra] = 1
+
+
+        lista_items = dic_frecuencia.items() #Nos devuelve una lista de tuplas con la pareja
+                                            # (Item, Valor)
+
+        for tupla in lista_items:
+
+            top.append(list(tupla)) #Convertimos cada tupla en una lista.
+
+        '''
+        Ordenamos los elementos descendentemente del TOP:
+        '''
+
+        for i in range(len(top)-1):
+
+            for j in range(len(top)-1):
+
+                if(top[j] != top[i]):
+
+                    if(top[j][1] < top[j+1][1]):
+
+                        auxiliar = top[j]
+                        top[j] = top[j+1]
+                        top[j+1] = auxiliar
+
+        print("Ranking de palabras más usadas en las letras de las canciones en esta playlist:")
+
+        top.remove(top[0])
+
+        for x in range(0, 10):
+
+            print(f'\n  {x + 1} - Palabra: "{top[x][0]}" ')
+
+    if(lista_letras == []):
+
+        print("\nLa playlist esta vacía o no tiene música.")
+	
+	
 def ranking_palabras_YT(youtube) -> None:
 
     i = 0
@@ -1156,7 +1230,7 @@ def ranking_palabras_Spotify(spotify: Spotify) -> None:
 
     top_10_palabras(lista_letras)
 	
-	
+
 def menu_analizar_playlist(youtube, spotify: Spotify):
 
     '''
