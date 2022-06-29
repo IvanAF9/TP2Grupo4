@@ -8,7 +8,10 @@ from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from lyricsgenius import Genius
-
+from wordcloud import WordCloud, STOPWORDS 
+import matplotlib.pyplot as plt #para mostrar nuestra nube de palabras
+from PIL import Image #para cargar nuestra imagen
+import numpy as np #para obtener el color de nuestra imagen
 
 def acceso_youtube():
     '''Genera conexion con youtube a traves de la clave.json
@@ -1063,80 +1066,34 @@ def sincronizar_playlist(service_youtube, spotify) -> None:
     except:
         print("Ha ocurrido un error, por favor intentelo de nuevo")       
 
-def top_10_palabras(lista_letras: list) -> None:
 
+def nube_de_palabras(letras_playlist : list):
+    '''pre: recibe las letras de canciones de determinada playlist
+       pos: muesta una imagen de nube de plabras con las 
+       palabras mas usadas
     '''
-    
-    PRE: Recibe la lista con todas las palabras de una playlist.
-    POST: Escribe el top de palabras o devuelve un mensaje de vacío.
+    try:
+        #El contenido: 
+        stopwords = set(STOPWORDS)
+        letras = " ".join(letras_playlist)
+        #La apariencia:
+        imagen = np.array(Image.open('nube.png'))
+        wc = WordCloud(background_color = 'white',
+            max_words = 10,
+            max_font_size = 80,
+            stopwords = stopwords,
+            mask = imagen
+        )
+        wc.generate(letras)
 
-    '''
-
-    if(lista_letras != []):
-
-        eliminar: str = ",;:.\n!['](\)" #Esta cadena tiene como función ayudarnos a eliminar
-                                #Caracteres molestos en las letras de las canciones.
-
-        dic_frecuencia: dict = {}
-        top: list = []
-
-        for letra_completa in lista_letras:
-
-            for caracter in eliminar:
-
-                letra_completa = letra_completa.replace(caracter, "")
-
-
-            letra_completa = letra_completa.lower() #Lo ponemos en minúscula para evitar posibles errores.
-            letra_completa = letra_completa.split(" ") #Lo convierto en una lista de palabras.
-
-            for palabra in letra_completa:
-
-                if palabra in dic_frecuencia:
-
-                    dic_frecuencia[palabra] += 1
-
-                else:
-                    
-                    dic_frecuencia[palabra] = 1
+        #Graficado
+        plt.imshow(wc, interpolation = 'bilinear')
+        plt.axis('off')
+        plt.show()
+    except ValueError:
+        print('Error, no se hallaron canciones en la playlist')
 
 
-        lista_items = dic_frecuencia.items() #Nos devuelve una lista de tuplas con la pareja
-                                            # (Item, Valor)
-
-        for tupla in lista_items:
-
-            top.append(list(tupla)) #Convertimos cada tupla en una lista.
-
-        '''
-        Ordenamos los elementos descendentemente del TOP:
-        '''
-
-        for i in range(len(top)-1):
-
-            for j in range(len(top)-1):
-
-                if(top[j] != top[i]):
-
-                    if(top[j][1] < top[j+1][1]):
-
-                        auxiliar = top[j]
-                        top[j] = top[j+1]
-                        top[j+1] = auxiliar
-
-        print("Ranking de palabras más usadas en las letras de las canciones en esta playlist:")
-
-        top.remove(top[0])
-
-        for x in range(0, 10):
-
-            print(f'\n  {x + 1} - Palabra: "{top[x][0]}" ')
-
-    if(lista_letras == []):
-
-        print("\nLa playlist esta vacía o no tiene música.")
-	
-	
 def ranking_palabras_YT(youtube) -> None:
 
     i = 0
@@ -1181,7 +1138,7 @@ def ranking_palabras_YT(youtube) -> None:
             lista_letras.append(letra)
 
 
-    top_10_palabras(lista_letras)
+    nube_de_palabras(lista_letras)
 
 
 def ranking_palabras_Spotify(spotify: Spotify) -> None:
@@ -1201,7 +1158,7 @@ def ranking_palabras_Spotify(spotify: Spotify) -> None:
 
         nombre_playlist = playlist_usuario.name
 
-        print(f'\n{y} --> {nombre_playlist}. \n')
+        print(f'\n{y} --> {nombre_playlist}. ')
 
     escoger_playlist: int = int(input("Cual playlist elegís: "))
 
@@ -1228,7 +1185,7 @@ def ranking_palabras_Spotify(spotify: Spotify) -> None:
 
                     lista_letras.append(letra)
 
-    top_10_palabras(lista_letras)
+    nube_de_palabras(lista_letras)
 	
 
 def menu_analizar_playlist(youtube, spotify: Spotify):
@@ -1290,6 +1247,7 @@ def menu() -> int:
         "Buscar elementos en Spotify (Agregarlos a playlists o ver letras de canciones)",
         "Sincronizar una playlist en ambas plataformas",
         "Analizar una playlist",
+        "Nube de palabras de una playlist",
         "Salir"
     ]
     print("***MENU***")
@@ -1307,7 +1265,7 @@ def main():
     select_menu = menu()
     sesion_youtube: bool = False
     sesion_spotify: bool = False
-    while select_menu != 13:
+    while select_menu != 14:
         if select_menu == 1:
             service_youtube = sub_menu_acceso_youtube()
             sesion_youtube = service_youtube[1]
@@ -1338,6 +1296,17 @@ def main():
                 sincronizar_playlist(service_youtube[0], spotify)
         elif select_menu ==12 and sesion_youtube == True and sesion_spotify == True:
             menu_analizar_playlist(service_youtube[0], spotify)
+        elif select_menu ==13 :
+            print('Desea realizarlo a travez de spotify o Youtube?')
+            opcion = input('Ingrese opcion s/y: ')
+            if opcion == 'y' and sesion_youtube == True:
+                ranking_palabras_YT(service_youtube[0])
+            elif opcion == 's' and sesion_spotify == True:
+                ranking_palabras_Spotify(spotify)
+            elif opcion != 's' and opcion != 'y':
+                print('Caracter ingresado incorecto')
+            else:
+                print('Debe iniciar sesion primero')
         elif select_menu in [3,5,7,9,11,12] and sesion_youtube == False:
             print("Antes debe iniciar sesion en youtube")
         elif select_menu in [4,6,8,10,11,12] and sesion_spotify == False:
