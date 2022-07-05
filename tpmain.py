@@ -71,12 +71,20 @@ def acceso_spotify() -> Spotify:
     cliente_secreto = '27e3e8415ef44fe997e731d830ec5541'
     redireccion_uri = 'https://github.com/IvanAF9/TP2Grupo4'
     conf = (id_cliente, cliente_secreto, redireccion_uri)
-    try:
-        token_usuario = tk.prompt_for_user_token(*conf,
-                                             scope=tk.scope.every)  # pide permisos al usuario y redirecciona, devuelve token
-        return tk.Spotify(token_usuario)  # Inicia la conexion a la API Spotify
-    except:
-        print('Error: URL incorrecta')
+    
+    chequeo = 0
+    while chequeo == 0:
+        try:
+            token_usuario = tk.prompt_for_user_token(*conf, scope=tk.scope.every)  # pide permisos al usuario y redirecciona, devuelve token
+            conexion = tk.Spotify(token_usuario)  # Inicia la conexion a la API Spotify
+        except:
+            print('Error: URL incorrecta')
+            input('Presione ENTER para volver a intentarlo')
+
+        else:
+            chequeo = 1
+
+    return conexion
     
 def listar_playlists(spotify: Spotify, solo_mostrar_titulo_playlist: str):
     '''Hace un print de las playlists del usuario actual por cancion y artista
@@ -1122,11 +1130,8 @@ def main():
             sesion_youtube = service_youtube[1]
         elif select_menu == 2:
             spotify = acceso_spotify()
-            if spotify != None:
-                print(' --- LOGUEO EXITOSO ---')
-                sesion_spotify = True
-            else:
-                print('Fallo conexion con Spotify, vuelva a intertarlo ')
+            print(' --- LOGUEO EXITOSO ---')
+            sesion_spotify = True
         elif select_menu == 3 and sesion_youtube ==True:
             listar_playlist_y_temas_youtube(service_youtube[0])
         elif select_menu == 4 and sesion_spotify == True:
