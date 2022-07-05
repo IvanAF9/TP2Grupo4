@@ -469,60 +469,57 @@ def crear_lista_de_reproduccion_youtube(service_youtube) -> None:
     """Invoca las funciones necesarias para crear una playlist y agregarle canciones o videos"""
     """ PRE: recibe la conexion del tipo "Service_youtube" con la API, 
         POS: no devulve nada"""
-    try:
-        nueva_lista: str = input("Ingrese el nombre de la lista a crear: ")
-        no_valido: bool = True
-        while no_valido == True:
-            todos_espacios: int = 0
-            for caracter in nueva_lista:
-                if caracter == " ":
-                    todos_espacios += 1
-            if todos_espacios == len(nueva_lista):
-                no_valido =True
-                nueva_lista = input("Ingrese un nombre para la lista: ")
-            else:
-                no_valido = False
-        print("Creando lista de reproduccion...")
-        crear_playlist_youtube(service_youtube, nueva_lista)
-        print("Lista creada")
-        print("Cargando canciones...")
-        time.sleep(3)
-        lista_playlist = listar_playlists_youtube(service_youtube)
-        ultima_playlistId = lista_playlist[0]["playlistId"]
-        lista_temas = ver_todos_los_temas_youtube(service_youtube)
-        lista_temas.append({"title":"Volver al menu"})
-        i: int = 0
-        print()
-        print("Canciones existentes en todas sus playlist:")
-        for lista in lista_temas:
-            i+=1
-            if i<len(lista_temas):
-                print(i,"- ***",lista["title"],"***")
-            else:
-                print(i,"-",lista["title"])
-        texto: str = "Seleccion una cancion para listar en la playlist creada o vuelva al menu: "
+    nueva_lista: str = input("Ingrese el nombre de la lista a crear: ")
+    no_valido: bool = True
+    while no_valido == True:
+        todos_espacios: int = 0
+        for caracter in nueva_lista:
+            if caracter == " ":
+                todos_espacios += 1
+        if todos_espacios == len(nueva_lista):
+            no_valido =True
+            nueva_lista = input("Ingrese un nombre para la lista: ")
+        else:
+            no_valido = False
+    print("Creando lista de reproduccion...")
+    crear_playlist_youtube(service_youtube, nueva_lista)
+    print("Lista creada")
+    print("Cargando canciones...")
+    time.sleep(1) #darle tiempo al servidor para que al llamar nuevamente a las listas, incluya la ultima creada
+    lista_playlist = listar_playlists_youtube(service_youtube)
+    ultima_playlistId = lista_playlist[0]["playlistId"]
+    lista_temas = ver_todos_los_temas_youtube(service_youtube)
+    lista_temas.append({"title":"Volver al menu"})
+    i: int = 0
+    print()
+    print("Canciones existentes en todas sus playlist:")
+    for lista in lista_temas:
+        i+=1
+        if i<len(lista_temas):
+            print(i,"- ***",lista["title"],"***")
+        else:
+            print(i,"-",lista["title"])
+    texto: str = "Seleccion una cancion para listar en la playlist creada o vuelva al menu: "
+    select = validar_ingreso_int(texto)
+    while select != len(lista_temas):
+        if select<1 or select>len(lista_temas):
+            print("Opcion invalida")
+        else:
+            videoId = lista_temas[select-1]["videoid"]
+            print("Listando cancion...")
+            insertar_en_playlist_youtube(service_youtube, ultima_playlistId, videoId)
+            lista_temas.remove(lista_temas[select-1])
+            print("Elemento listado")
+            print()
+            print("Elementos restantes:")
+            i = 0
+            for lista in lista_temas:
+                i+=1
+                if i<len(lista_temas):
+                    print(i,"- ***",lista["title"],"***")
+                else:
+                    print(i,"-",lista["title"])
         select = validar_ingreso_int(texto)
-        while select != len(lista_temas):
-            if select<1 or select>len(lista_temas):
-                print("Opcion invalida")
-            else:
-                videoId = lista_temas[select-1]["videoid"]
-                print("Listando cancion...")
-                insertar_en_playlist_youtube(service_youtube, ultima_playlistId, videoId)
-                lista_temas.remove(lista_temas[select-1])
-                print("Elemento listado")
-                print()
-                print("Elementos restantes:")
-                i = 0
-                for lista in lista_temas:
-                    i+=1
-                    if i<len(lista_temas):
-                        print(i,"- ***",lista["title"],"***")
-                    else:
-                        print(i,"-",lista["title"])
-            select = validar_ingreso_int(texto)  
-    except:
-        print("Ha ocurrido un error, por favor intentelo de nuevo")
 
 def expotar_playlist_youtube(service_youtube):
     '''pre:recibe las credenciales
@@ -733,12 +730,9 @@ def expotar_playlist_spotify(spotify: Spotify):
 def obtener_id_playlist_creada(spotify: Spotify) -> str:
     """ PRE: recibe la conexion del tipo "Spotify" con la API
         POS: devuelve la id de la ultima playlist creada en spotify"""
-
     usuario = spotify.current_user() 
     playlists = spotify.playlists(usuario.id)
-    for playlist_usuario in playlists.items:
-        playlistID=playlist_usuario.id
-        break
+    playlistID = playlists.items[0].id
     return playlistID
 
 def listar_playlists_spotify(spotify: Spotify) -> list:
@@ -804,7 +798,6 @@ def buscador_spotify_para_sincronizar(
     """PRE: recibe la conexion del tipo "Spotify" con la API, el titulo de una cancion 
         y el id de la ultima playlist creada
         POS: devuelve una lista con los nombres de las canciones que no se encuentran en la plataforma"""
-    mensaje: str = str
     mensaje = ("Buscando " + nombre_cancion + "... ")
     print(mensaje, end=" ")
     usuario_eleccion_elemento = "track"
@@ -813,7 +806,7 @@ def buscador_spotify_para_sincronizar(
         for usuario_eleccion_elemento in elementos.items:  # recorre cada elemento encontrado
             if len(listado_elementos_encontrados) < 1:
                 listado_elementos_encontrados.append(usuario_eleccion_elemento)
-    time.sleep(1)
+    time.sleep(1) # si se hace todo de corrido, a veces da error de servidor, por eso se espera 1 segundo
     if len(listado_elementos_encontrados) > 0:
         spotify.playlist_add(playlistID, [listado_elementos_encontrados[0].uri])
         print("elemento agregado")  
@@ -829,11 +822,10 @@ def buscador_yotube_para_sincronizar(
     """ PRE: recibe la conexion del tipo "Service_yotube" con la API, el titulo de una cancion 
         y el id de la ultima playlist creada
         POS: devuelve una lista con los nombres de las canciones que no se encuentran en la plataforma"""
-    mensaje: str = str
     mensaje = ("Buscando " + nombre_cancion + "... ")
     print(mensaje, end=" ")
     search_in_youtube = service_youtube.search().list(q=nombre_cancion,part="id, snippet", maxResults=1).execute()
-    time.sleep(1)
+    time.sleep(1) # si se hace todo de corrido, a veces da error de servidor, por eso se espera 1 segundo
     if(search_in_youtube["items"] == []):
         elementos_no_encontrados.append(nombre_cancion)
         print("no disponible en youtube")
@@ -861,7 +853,7 @@ def selector(
         elif salida == "crear_lista":
             usuario_actual = spotify.current_user()
             spotify.playlist_create(usuario_actual.id, titulo)
-            time.sleep(3)
+            time.sleep(1) #darle tiempo al servidor para que al llamar nuevamente a las listas, incluya la ultima creada
             ultima_playlistId = obtener_id_playlist_creada(spotify)
             return ultima_playlistId 
         elif salida == "buscador":
@@ -879,7 +871,7 @@ def selector(
             return lista_canciones
         elif salida == "crear_lista":
             crear_playlist_youtube(service_youtube, titulo)
-            time.sleep(3)
+            time.sleep(1) #darle tiempo al servidor para que al llamar nuevamente a las listas, incluya la ultima creada
             lista_playlist = listar_playlists_youtube(service_youtube)
             ultima_playlistId = lista_playlist[0]["playlistId"]
             return ultima_playlistId
