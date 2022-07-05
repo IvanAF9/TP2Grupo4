@@ -572,83 +572,55 @@ def expotar_playlist_youtube(service_youtube):
         print("Error con la apertura del archivo")
 
 def mostrar_lyric(cancion: str):
-	
     token_genius = "hzZzDlh8ecFwCdcMsyVeCCdC_PH62cDSEJgIPXTn2JSq1qlHnn2GcqvsZyN0p-9o"
-
-    '''
-    Este token fue generado a partir de la cuenta mail del loco mauro.
-    
-    '''
+    '''Este token fue generado a partir de la cuenta mail del loco mauro.'''
     genius = Genius(token_genius)
 
     if ("Official Video" in cancion 
         or "Live" in cancion
         or "Video Oficial" in cancion):
-
         cancion = cancion.replace("(Official Video)", "")
         cancion = cancion.replace("(Live)", "")
         cancion = cancion.replace("(Video Oficial)", "")
 
     song = genius.search_song(cancion)
-
     if(song == None):
-
         song = ""
-
     else:
-
         song = str(song)
-
     return song
 
 
 def buscador_youtube(youtube) -> None:
     print("Buscador de YouTube. Que desea ver?")
     print("\nEscriba lo que quiera buscar (nombre de video, nombre de canal, cantante, etc)")
-
     busqueda: str = input("-- ")
-
     while (busqueda == ""):
         busqueda = input("No puede buscar algo vacío: ")
-
     y: int = -1
-
     search_in_youtube = youtube.search().list(
-
         q=busqueda,
         order="viewCount",
         part="id, snippet",
         maxResults=3
-
     ).execute()
-
     videos: list = []
-
     print('Buscando videos...')
 
     if (search_in_youtube["items"] == []):
-
         print("\n No se encontraron resultados.")
-
     else:
-
         print("\nLos videos que se encontraron son (según reproducciones): ")
-
         for resultado in search_in_youtube.get("items", []):
-
             y += 1
-
             if resultado["id"]["kind"] == "youtube#video":
                 videos.append("%s (%s)" % (resultado["snippet"]["title"],
                                            resultado["id"]["videoId"]))
-
             print(f"\n{y + 1}- {videos[y][0: len(videos[y]) - 13]}")
-
         print("\nDesea agregar alguna de las opciones a una playlist? (1 = Sí / ENTER = No)")
         decision: str = input("Respuesta: ")
 
         while (decision == '1' and len(videos) <= 3 and len(videos) != 0):
-
             i: int = 0
             list_video: list = []
 
@@ -656,7 +628,6 @@ def buscador_youtube(youtube) -> None:
                 i += 1
                 print(f'\n{i} - {v[0: len(v) - 13]}')
                 list_video.append([i, v])
-
             video_elegido: str = input("\nCual elemento va a agregar (1, 2, 3): ")
 
             while (video_elegido != '1' and
@@ -665,24 +636,17 @@ def buscador_youtube(youtube) -> None:
                 video_elegido = input('\nElija un video: ')
 
             elegido = list_video[int(video_elegido) - 1][1]
-
             videoId = elegido[len(elegido) - 12: len(elegido) - 1]
-
             print("\nLas playlist disponibles son: ")
-
             todas_las_playlist = listar_playlists_youtube(youtube)
-
             i = 0
 
             for playlist in todas_las_playlist:
                 i += 1
-
                 print(f"{i} - {playlist['title']}")
 
             print("\nA cuál lista lo queres agregar?: ")
-
             playlist_elegida: str = input("\nPlaylist elegida: ")
-
             num_playlist: int = int(playlist_elegida)
 
             while (num_playlist > len(todas_las_playlist)):
@@ -690,7 +654,6 @@ def buscador_youtube(youtube) -> None:
                 num_playlist: int = int(playlist_elegida)
 
             playlistId = todas_las_playlist[int(playlist_elegida) - 1]['playlistId']
-
             print("Agregando videos...")
 
             agregar_a_playlist_yt = youtube.playlistItems().insert(
@@ -707,20 +670,14 @@ def buscador_youtube(youtube) -> None:
             ).execute()
 
             videos.remove(videos[int(video_elegido) - 1])
-	
             resp_1: str = input("\nSu video es una canción? (1 = Sí / ENTER = No)")
-	
+
             if(resp_1 == '1'):
-                
                 resp_2:str = input("\nQuiere ver su letra? (1 = Sí / ENTER = No)")
                 letra:str = mostrar_lyric(elegido[0: len(elegido) - 13])
-
                 if(letra == ""):
-
                     print("\nNo fue posible encontrar la letra.")
-
                 else:
-                
                     print(letra)
 
             decision = input("\nDesea agregar otro video?: ")
@@ -1079,96 +1036,60 @@ def nube_de_palabras(letras_playlist : list):
 
 
 def ranking_palabras_YT(youtube) -> None:
-
     i = 0
-
     print('\nPara cual playlist de YT va a querer su ranking?')
-
     todas_las_playlist = listar_playlists_youtube(youtube)
 
     for playlist in todas_las_playlist:
-
         i += 1
-
         print(f"{i} - {playlist['title']}")
-    
 
     respuesta = int(input("\nDe cuál playlist querrá el ranking?"))
-
     respuesta = respuesta - 1 # La respuesta le resto uno para que coincida con la posicion real de la playlist.
                               # Ya que en los diccionarios se empieza a contar desde el 0 (cero).
-    
     playlist_elegida = todas_las_playlist[respuesta]
-
     lista_letras: list = []
 
     elementos_de_playlist = youtube.playlistItems().list(
-
         playlistId = playlist_elegida['playlistId'],
         part = "snippet",
         maxResults = 50
     ).execute()
 
     for video in elementos_de_playlist["items"]:
-
-        # print(video)
-
         titulo_video = video["snippet"]["title"]
-
         letra: str = mostrar_lyric(titulo_video)
-        
         if(letra != ""):
-
             lista_letras.append(letra)
-
 
     nube_de_palabras(lista_letras)
 
-
 def ranking_palabras_Spotify(spotify: Spotify) -> None:
-
     l_playlist: list = []
     lista_letras: list = []
     y: int = 0
     p: int = 0
-
     usuario = spotify.current_user() 
     playlists = spotify.playlists(usuario.id)
 
     for playlist_usuario in playlists.items:
-
         y += 1
-        # playlist_actual = spotify.playlist(playlist_usuario.id)
-
         nombre_playlist = playlist_usuario.name
-
         print(f'\n{y} --> {nombre_playlist}. ')
-
     escoger_playlist: int = int(input("Cual playlist elegís: "))
 
     while(escoger_playlist > y):
-
         escoger_playlist: int = int(input("Cual playlist elegís: "))
 
-
     for playlist_usuario in playlists.items:
-
         p += 1
-
         if(p == escoger_playlist):
-
             playlist_elegida = spotify.playlist(playlist_usuario.id)
-
             for cancion in playlist_elegida.tracks.items:
-
                 nombre_cancion = cancion.track.name
-
                 letra = mostrar_lyric(nombre_cancion)
-
                 if(letra != ""):
-
                     lista_letras.append(letra)
-
     nube_de_palabras(lista_letras)
 	
 	
