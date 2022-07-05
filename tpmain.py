@@ -232,8 +232,7 @@ def buscador_spotify(spotify: Spotify):
                     chequeo_opcion = 1
 
             accion_con_elementos_buscados(spotify, listado_elementos_encontrados[int(usuario_elige) - 1])
-        else:
-            pass
+        
     else:
         print('\nNo se ha encontrado resultados para su busqueda')
 
