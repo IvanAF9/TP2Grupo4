@@ -577,6 +577,13 @@ def expotar_playlist_youtube(service_youtube):
         print("Error con la apertura del archivo")
 
 def mostrar_lyric(cancion: str):
+	
+    '''
+    PRE: recibe una cadena con el título del video.
+    POST: retorna un string con toda la letra de la canción, en caso de no ser canción o 
+          no encontrar la letra, devolverá una cadena vacía.
+    '''
+	
     token_genius = "hzZzDlh8ecFwCdcMsyVeCCdC_PH62cDSEJgIPXTn2JSq1qlHnn2GcqvsZyN0p-9o"
     '''Este token fue generado a partir de la cuenta mail del loco mauro.'''
     genius = Genius(token_genius)
@@ -597,6 +604,14 @@ def mostrar_lyric(cancion: str):
 
 
 def buscador_youtube(youtube) -> None:
+	
+    '''
+    PRE: La función recibe las credenciales para entrar y usar la API.
+    POST: Esta función no retorna ningún dato, crea una lista con los títulos de los 
+          tres videos más vistos según lo solicitado. Y también se podrá agregar algún
+          video en otra playlist.
+    '''	
+	
     print("Buscador de YouTube. Que desea ver?")
     print("\nEscriba lo que quiera buscar (nombre de video, nombre de canal, cantante, etc)")
     busqueda: str = input("-- ")
@@ -1031,6 +1046,14 @@ def nube_de_palabras(letras_playlist : list):
 
 
 def ranking_palabras_YT(youtube) -> None:
+	
+    '''
+    PRE: Recibe las credenciales para YT.
+    POST: Crea una lista de todas las letras de todas las canciones de la 
+	  playlist elegida. Esta misma será el argumento para la función
+	  nube_de_palabras().
+    '''
+	
     i = 0
     print('\nPara cual playlist de YT va a querer su ranking?')
     todas_las_playlist = listar_playlists_youtube(youtube)
@@ -1060,7 +1083,14 @@ def ranking_palabras_YT(youtube) -> None:
     nube_de_palabras(lista_letras)
 
 def ranking_palabras_Spotify(spotify: Spotify) -> None:
-    l_playlist: list = []
+    
+    '''
+    PRE: Recibe las credenciales para Spotify.
+    POST: Crea una lista de todas las letras de todas las canciones de la 
+          playlist elegida. Esta misma será el argumento para la función
+          nube_de_palabras().
+    '''
+
     lista_letras: list = []
     y: int = 0
     p: int = 0
