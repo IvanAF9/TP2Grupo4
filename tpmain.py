@@ -559,15 +559,17 @@ def expotar_playlist_youtube(service_youtube):
     atributos = ('-Id del canal: ', channel_id, '-Tiempo de subida: ', time)
     descripcion_general = ('-Descripcion general: ', descripcion)
 
-    with open('archivo_playlists.csv', 'w', newline='') as lista:
-        datos = csv.writer(lista, delimiter=' ')
-        datos.writerow(nombre_playlist)
-        datos.writerows(nombre_videos)
-        datos.writerow(atributos)
-        try:
+    try:
+        with open('archivo_playlists.csv', 'w', newline='') as lista:
+            datos = csv.writer(lista, delimiter=' ')
+            datos.writerow(nombre_playlist)
+            datos.writerows(nombre_videos)
+            datos.writerow(atributos)
             datos.writerow(descripcion_general)
-        except UnicodeEncodeError:
-            print('Hubo un error con la descipcion, por un caracter no aceptado')
+    except UnicodeEncodeError:
+        print('Hubo un error con la descipcion, por un caracter no aceptado')
+    except:
+        print("Error con la apertura del archivo")
 
 def mostrar_lyric(cancion: str):
 	
@@ -755,18 +757,21 @@ def expotar_playlist_spotify(spotify: Spotify):
     numero_canciones = ['Numero de canciones : ',numero_canciones]
     descripcion = ['Descripcion : ',descripcion]
 
-    with open('archivo_playlists.csv', 'w', newline='') as lista:
-        datos = csv.writer(lista, delimiter=' ') 
-        datos.writerow(nombre_usuario)
-        datos.writerow(playlist_nombre)
-        datos.writerow('Nombre de las canciones :')
+    try:
+        with open('archivo_playlists.csv', 'w', newline='') as lista:
+            datos = csv.writer(lista, delimiter=' ') 
+            datos.writerow(nombre_usuario)
+            datos.writerow(playlist_nombre)
+            datos.writerow('Nombre de las canciones :')
         
-        for canciones in lista_canciones:
-            for cancion in canciones:
-                datos.writerow(cancion)
+            for canciones in lista_canciones:
+                for cancion in canciones:
+                    datos.writerow(cancion)
                 
-        datos.writerows(descripcion)
-        datos.writerow(numero_canciones)
+            datos.writerows(descripcion)
+            datos.writerow(numero_canciones)
+    except:
+        print("Error con la apertura del archivo")
 
 def obtener_id_playlist_creada(spotify: Spotify) -> str:
     """ PRE: recibe la conexion del tipo "Spotify" con la API
