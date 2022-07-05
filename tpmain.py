@@ -121,22 +121,6 @@ def listar_playlists(spotify: Spotify, solo_mostrar_titulo_playlist: str):
                 chequeo_opcion = 1
         return lista_playlists_titulos[int(eleccion_playlist) - 1]
 
-    '''Comentarios para el equipo:
-    Los objectos que devuelven las funciones de tekore tienen atributos.
-    Estos objetos se ven de la siguiente manera:
-    Objecto: Playlist
-    Atributos: id: 4564512531
-               nombre: nombre de la playlist
-               foto de la playlist: 48451515
-               etc.
-    Para invocar estos atributos simplemente se pone nombre_del_objeto.atributo
-    A su vez un atributo dentro de un objeto, puede ser tambien un objeto con sub atributos, y de esa manera es guardada la información de canciones
-    dentro de una playlist, con sub-objetos.
-    Por ejemplo playlist_actual.tracks.items es un objeto que contiene atributos de las canciones de la playlist
-    En la documentación de tekore figuran los objetos y sus atributos que devuelven las funciones, esto esta en:
-    https://tekore.readthedocs.io/en/stable/reference/client.html
-    '''
-
 def mostrar_letra_cancion(usuario_eleccion_elemento, genius: Genius):
     '''Busca y muestra letra de canciones buscadas por el usuario
     PRE: Recibe el objeto usuario_eleccion_elemento con informacion de la cancion buscada y la conexion a la API de Genius
